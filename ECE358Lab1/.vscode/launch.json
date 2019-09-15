@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "preLaunchTask": "Build with Makefile",
+        "name": "(lldb) Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/QueueSimulator.out",
+        "args": [],
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "lldb",
+        "logging": {
+          "trace": false,
+          "traceResponse": false,
+          "engineLogging": false
+        }
+      }
+    ]
+  }
