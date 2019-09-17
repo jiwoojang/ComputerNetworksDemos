@@ -3,15 +3,20 @@
     "configurations": [
       {
         "preLaunchTask": "Build with Makefile",
-        "name": "(lldb) Launch",
+        "name": "C++ Launch",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/build/QueueSimulator.out",
         "args": [],
         "cwd": "${workspaceFolder}",
         "environment": [],
-        "externalConsole": true,
-        "MIMode": "lldb",
+        "externalConsole": false,
+        "linux": {
+          "MIMode": "gdb"
+        },
+        "osx": {
+          "MIMode": "lldb"
+        },
         "logging": {
           "trace": false,
           "traceResponse": false,
