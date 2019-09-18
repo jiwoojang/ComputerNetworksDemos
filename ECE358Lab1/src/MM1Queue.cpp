@@ -24,7 +24,8 @@ bool locSortEventByTime(const Event& firstEvent, const Event& secondEvent)
 void MM1Queue::InitalizeQueue(double simulationTime)
 {
     double time = 0.0f;
-
+    Event lastDeparture(Event::EventType::Arrival, 0);
+    
     // Populate observer events
     while(time < simulationTime)
     {
@@ -56,7 +57,11 @@ void MM1Queue::InitalizeQueue(double simulationTime)
         double serviceTime = (packetLength / C);
 
         // Create and push corresponding departure event
-        Event departureEvent(Event::EventType::Departure, time + serviceTime);
+        // If the last generated departure occurs later than our current time base our new departure off that time
+        double departureTime = lastDeparture.GetProcessTime() > time ? lastDeparture.GetProcessTime() : time;
+        Event departureEvent(Event::EventType::Departure, departureTime + serviceTime);
+        lastDeparture = departureEvent;
+
         eventList.push_back(departureEvent);
     }
 
