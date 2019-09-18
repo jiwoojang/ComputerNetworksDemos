@@ -12,13 +12,14 @@ public:
         Departure
     };
 
-    Event(EventType type, double processTime);
+    Event(EventType type, double newProcessTime);
     ~Event(){};
+
+    double GetProcessTime() const { return processTime; }
+    EventType GetEventType() const { return eventType; }
 
 private:
     EventType eventType = Invalid;
     // TODO: Figure out if there are better portable versions of floats
-    double newProcessTime = 0.0f;
-
-    void SetProcessTime(float newProcessTime);
+    double processTime = 0.0f;
 };

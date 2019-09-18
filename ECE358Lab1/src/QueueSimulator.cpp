@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 
@@ -9,13 +10,44 @@ using namespace std;
 
 int main()
 {
-    RandomNumberGenerator numGen;
-
-    for (int i = 0; i < 1000; ++i)
+    for (float i = 0.25f; i < 1.05f; i += 0.1f)
     {
-        double num = numGen.GenerateRandomValue(75);
-        cout << num << endl;
-    }
+        cout << "rho: " << i << endl;
+        double lambda = i * 1000000 / 2000;
 
-    cout << endl;
+        MM1Queue queue(lambda, 2000, lambda * 5, 1000000);
+        queue.InitalizeQueue(1000.0f);
+        queue.ProcessQueue();
+    }
+    
+    // For precise logging
+/*     cout << fixed;
+    cout << setprecision(10);
+
+    for (Event event : queue.GetEventList())
+    {
+        string type = "";
+        switch(event.GetEventType())
+        {
+            case Event::EventType::Arrival:
+            {
+                type = "Arrival";
+                break;
+            }
+            case Event::EventType::Departure:
+            {
+                type = "Departure";
+                break;
+            }
+            case Event::EventType::Observer:
+            {
+                type = "Observer";
+                break;
+            }
+            default:
+                break;
+        }
+
+        cout << type <<  ": Time: " << event.GetProcessTime() << endl;
+    } */
 }

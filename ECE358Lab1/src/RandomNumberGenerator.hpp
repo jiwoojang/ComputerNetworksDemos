@@ -2,6 +2,8 @@
 #include <cmath>
 #include <random>
 
+using namespace std;
+
 class RandomNumberGenerator
 {
 public:
@@ -12,7 +14,7 @@ public:
     double GenerateRandomValue(double lambda);
 
 private:
-    std::random_device rd;
-    std::mt19937 generator;
-    std::uniform_real_distribution<double> dis;
+    random_device rd;
+    mt19937 generator;
+    uniform_real_distribution<double> dis;
 };

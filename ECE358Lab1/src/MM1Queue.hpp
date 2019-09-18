@@ -1,18 +1,27 @@
 #pragma once
-#include <queue>
+#include <list>
 
 #include "Event.hpp"
 #include "RandomNumberGenerator.hpp"
 
+using namespace std;
+
 class MM1Queue
 {
 public:
-    MM1Queue() {};
-    ~MM1Queue() {};
+    MM1Queue(double newLambda, int newL, double newAlpha, int newC);
+    ~MM1Queue();
 
-    double GetRandomNumber();
-    
+    void InitalizeQueue(double simulationTime);
+    const list<Event>& GetEventList() { return eventList; }
+    void ProcessQueue();
+
 private:
+    double lambda;
+    int L;
+    double alpha;
+    int C;
+
     RandomNumberGenerator numGen;
-    std::queue<Event> queue;
+    list<Event> eventList;
 };

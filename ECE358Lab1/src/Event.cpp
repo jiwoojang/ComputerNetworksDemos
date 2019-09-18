@@ -1,12 +1,7 @@
 #include "Event.hpp"
 
-Event::Event(EventType type, double processTime)
+Event::Event(EventType type, double newProcessTime)
 {
     eventType = type;
-    SetProcessTime(processTime);
-}
-
-void Event::SetProcessTime(float newProcessTime) 
-{ 
-    newProcessTime = newProcessTime; 
+    processTime = newProcessTime;
 }
