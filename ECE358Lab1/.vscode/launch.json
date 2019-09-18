@@ -10,11 +10,12 @@
         "args": [],
         "cwd": "${workspaceFolder}",
         "environment": [],
-        "externalConsole": false,
         "linux": {
+          "externalConsole": false,
           "MIMode": "gdb"
         },
         "osx": {
+          "externalConsole": true,
           "MIMode": "lldb"
         },
         "logging": {
