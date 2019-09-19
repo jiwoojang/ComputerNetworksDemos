@@ -13,12 +13,7 @@ MM1Queue::MM1Queue(double newLambda, int newL, double newAlpha, int newC)
 
 void MM1Queue::ProcessQueue()
 {
-    // TODO break this out into a common struct in the EventQueue class
-    int numArrivals = 0; 
-    int numDepartures = 0;
-    int numObservations = 0;
-    int idleCount = 0;
-    int numPackets = 0;
+    EventQueue::ProcessResults results;
 
     for (Event event : eventList)
     {
@@ -26,25 +21,25 @@ void MM1Queue::ProcessQueue()
         {
             case Event::EventType::Arrival:
             {
-                ++numArrivals;
+                ++results.numArrivals;
                 break;
             }
             case Event::EventType::Departure:
             {
-                ++numDepartures;
+                ++results.numDepartures;
                 break;
             }
             case Event::EventType::Observer:
             {
-                ++numObservations;
+                ++results.numObservations;
                 
-                if (numArrivals > numDepartures)
+                if (results.numArrivals > results.numDepartures)
                 {
-                    numPackets += numArrivals - numDepartures;
+                    results.queueSum += results.numArrivals - results.numDepartures;
                 }
                 else 
                 {
-                    ++idleCount;
+                    ++results.idleCount;
                 }
 
                 break;
@@ -54,6 +49,6 @@ void MM1Queue::ProcessQueue()
         }
     }
 
-    cout << "E[N]: " << numPackets / (float)numObservations << endl;
-    cout << "P idle: " << idleCount / (float)numObservations << endl;
+    cout << "E[N]: " << results.GetAveragePacketsInQueue() << endl;
+    cout << "P idle: " << results.GetIdleTimePercent() << endl;
 }

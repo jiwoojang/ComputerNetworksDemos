@@ -27,7 +27,6 @@ void EventQueue::InitalizeQueue(double simulationTime, bool generateDepartures) 
 
         // Create and push an observer event
         Event observerEvent(Event::EventType::Observer, time);
-
         eventList.push_back(observerEvent);
     }
 
@@ -44,14 +43,15 @@ void EventQueue::InitalizeQueue(double simulationTime, bool generateDepartures) 
         eventList.push_back(arrivalEvent);
 
         if (generateDepartures) {
-            // Calculate time at which this arrival will be processed
 
+            // Calculate time at which this arrival will be processed
             double packetLength = numGen.GenerateRandomValue(1.0f/L);
             double serviceTime = (packetLength / C);
 
-            // Create and push corresponding departure event
             // If the last generated departure occurs later than our current time base our new departure off that time
             double departureTime = lastDeparture.GetProcessTime() > time ? lastDeparture.GetProcessTime() : time;
+
+            // Create and push corresponding departure event
             Event departureEvent(Event::EventType::Departure, departureTime + serviceTime);
             lastDeparture = departureEvent;
 

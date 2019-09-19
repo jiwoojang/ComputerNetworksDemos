@@ -16,13 +16,7 @@ MM1KQueue::MM1KQueue(double newLambda, int newL, double newAlpha, int newC, int 
 
 void MM1KQueue::ProcessQueue()
 {
-    int numArrivals = 0; 
-    int numDepartures = 0;
-    int numObservations = 0;
-    int idleCount = 0;
-    int numPackets = 0;
-    int numDropped = 0;
-    int queueSum = 0;
+    EventQueue::ProcessResults results;
 
     // Add departure events to both the list and here if applicable
     // if event in queue, base departure time off last event in queue
@@ -34,12 +28,12 @@ void MM1KQueue::ProcessQueue()
         switch (event.GetEventType()) {
             case Event::EventType::Arrival:
             {
-                ++numArrivals;
+                ++results.numArrivals;
 
                 if (packetQueue.size() >= K) 
                 {
                     // Drop packet
-                    ++numDropped;
+                    ++results.numDropped;
                     break;
                 }
                 else 
@@ -72,21 +66,20 @@ void MM1KQueue::ProcessQueue()
             case Event::EventType::Departure:
             {
                 packetQueue.pop();
-                ++numDepartures;
+                ++results.numDepartures;
                 break;
             }
             case Event::EventType::Observer:
             {
-                ++numObservations;
+                ++results.numObservations;
 
                 if (packetQueue.size() == 0) 
                 {
-                    ++idleCount;
-                    queueSum += 0;
+                    ++results.idleCount;
                 }
                 else 
                 {
-                    queueSum += packetQueue.size();
+                    results.queueSum += packetQueue.size();
                 }
             }
             default:
@@ -94,8 +87,7 @@ void MM1KQueue::ProcessQueue()
         }
     }
 
-    cout << "E[N]: " << queueSum / (float)numObservations << endl;
-    cout << "P idle: " << idleCount / (float)numObservations << endl;
-    cout << "P dropped: " << numDropped / (float)numArrivals << endl;
-
+    cout << "E[N]: " << results.GetAveragePacketsInQueue() << endl;
+    cout << "P idle: " << results.GetIdleTimePercent() << endl;
+    cout << "P dropped: " << results.GetDroppedPacketPercent() << endl;
 }

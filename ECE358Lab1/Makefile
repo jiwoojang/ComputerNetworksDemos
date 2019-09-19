@@ -33,11 +33,16 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 	$(MKDIR_P) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-
 .PHONY: clean
 
 clean:
 	$(RM) -r $(BUILD_DIR)
+
+.PHONY: run
+
+run: 
+	make
+	./$(BUILD_DIR)/$(TARGET_EXEC)
 
 -include $(DEPS)
 
