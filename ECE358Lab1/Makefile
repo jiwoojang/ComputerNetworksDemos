@@ -1,5 +1,8 @@
 TARGET_EXEC ?= QueueSimulator.out
 
+CC := clang++
+CFLAGS := -stdlib=libc++
+
 CXX := clang++
 CXXFLAGS := -std=c++17
 
