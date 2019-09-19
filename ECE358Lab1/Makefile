@@ -1,6 +1,6 @@
 TARGET_EXEC ?= QueueSimulator.out
-CC := clang++
-CFLAGS :=  -std=c++17 -stdlib=libc++
+
+CXX := clang++
 CXXFLAGS := -std=c++17
 
 BUILD_DIR ?= ./build
