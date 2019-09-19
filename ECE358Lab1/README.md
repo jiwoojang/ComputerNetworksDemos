@@ -3,4 +3,5 @@
 With both `g++` and `clang` installed with C++17 support, simply run `make` in the project directory
 
 ### Running
-Run `build/QueueSimulator.out`
+Run `make run`
+This will build and run the executable
