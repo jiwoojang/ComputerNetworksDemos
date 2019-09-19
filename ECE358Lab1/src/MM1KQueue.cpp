@@ -28,12 +28,6 @@ void MM1KQueue::ProcessQueue()
     // if event in queue, base departure time off last event in queue
     std::queue<Event> packetQueue;
 
-    // auto it=eventList.begin();
-    // for (int i=0; i<100; i++) {
-    //     cout << it->GetEventType() << endl;
-    //     ++it;
-    // }
-
     for (auto it=eventList.begin(); it != eventList.end(); ++it) 
     {  
         Event event = *it;

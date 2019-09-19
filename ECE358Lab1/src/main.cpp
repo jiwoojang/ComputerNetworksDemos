@@ -29,7 +29,7 @@ void MM1KTest() {
         cout << "rho: " << i << endl;
         double lambda = i * 1000000 / 2000;
 
-        MM1KQueue queue(lambda, 100, lambda * 5, 1000000, K);
+        MM1KQueue queue(lambda, 2000, lambda * 5, 1000000, K);
         queue.InitalizeQueue(1000.0f, false);
         queue.ProcessQueue();
     }
