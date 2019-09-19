@@ -17,7 +17,7 @@ protected:
     int L;
     double alpha;
     int C;
-    int queueSize;
+    int K; // Queue Size
 
     RandomNumberGenerator numGen;
     list<Event> eventList;

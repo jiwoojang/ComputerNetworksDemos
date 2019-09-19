@@ -13,6 +13,7 @@ MM1Queue::MM1Queue(double newLambda, int newL, double newAlpha, int newC)
 
 void MM1Queue::ProcessQueue()
 {
+    // TODO break this out into a common struct in the EventQueue class
     int numArrivals = 0; 
     int numDepartures = 0;
     int numObservations = 0;
