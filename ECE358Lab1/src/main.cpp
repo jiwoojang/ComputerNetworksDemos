@@ -13,6 +13,13 @@ using namespace std;
 
 void Question1() {
 
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//                  QUESTION 1                  //" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+    
     int lambda = 75;
 
     // Initialize/seed the random number generator with the system time
@@ -31,9 +38,17 @@ void Question1() {
 }
 
 void Question3() {
+    
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//                  QUESTION 3                  //" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+    
     for (float i = 0.25f; i < 1.05f; i += 0.1f)
     {
-        cout << "rho: " << i << endl;
+        cout << "Rho: " << i << endl;
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
@@ -43,6 +58,14 @@ void Question3() {
 }
 
 void Question4() {
+
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//                  QUESTION 4                  //" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+    
     double lambda =  1.2f * LINKRATE / MEANPACKETLENGTH;
 
     MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
@@ -50,11 +73,11 @@ void Question4() {
     queue.ProcessQueue();
 }
 
-void MM1KTest() {
-    int K = 10;
-    for (float i = 0.5f; i < 1.6f; i += 0.1f)
+void Question6GraphAnalysis(int K, float startRho, float endRho, float stepSize)
+{
+    for (float i = startRho; i < (endRho + stepSize); i += stepSize)
     {
-        cout << "rho: " << i << endl;
+        cout << "Rho: " << i << endl;
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1KQueue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE, K);
@@ -63,6 +86,45 @@ void MM1KTest() {
     }
 }
 
+void Question6()
+{
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//                  QUESTION 6                  //" << endl;
+    cout << "//                                              //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                E[N] Analysis                 //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+
+    Question6GraphAnalysis(10, 0.5f, 1.5f, 0.1f);
+    Question6GraphAnalysis(25, 0.5f, 1.5f, 0.1f);
+    Question6GraphAnalysis(50, 0.5f, 1.5f, 0.1f);
+
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << "//                PLoss Analysis                //" << endl;
+    cout << "//////////////////////////////////////////////////" << endl;
+    cout << endl;
+
+    Question6GraphAnalysis(10, 0.4f, 2.0f, 0.1f);
+    Question6GraphAnalysis(25, 0.4f, 2.0f, 0.1f);
+    Question6GraphAnalysis(50, 0.4f, 2.0f, 0.1f);
+
+    Question6GraphAnalysis(10, 2.0f, 5.0f, 0.2f);
+    Question6GraphAnalysis(25, 2.0f, 5.0f, 0.2f);
+    Question6GraphAnalysis(50, 2.0f, 5.0f, 0.2f);
+
+    Question6GraphAnalysis(10, 5.0f, 10.0f, 0.4f);
+    Question6GraphAnalysis(25, 5.0f, 10.0f, 0.4f);
+    Question6GraphAnalysis(50, 5.0f, 10.0f, 0.4f);
+}
+
 int main() {
-    MM1KTest();
+    Question1();
+    Question3();
+    Question4();
+    Question6();
 }

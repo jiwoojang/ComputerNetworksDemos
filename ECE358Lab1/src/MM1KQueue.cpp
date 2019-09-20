@@ -90,4 +90,5 @@ void MM1KQueue::ProcessQueue()
     cout << "E[N]: " << results.GetAveragePacketsInQueue() << endl;
     cout << "P idle: " << results.GetIdleTimePercent() << endl;
     cout << "P dropped: " << results.GetDroppedPacketPercent() << endl;
+    cout << endl;
 }

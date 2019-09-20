@@ -51,4 +51,5 @@ void MM1Queue::ProcessQueue()
 
     cout << "E[N]: " << results.GetAveragePacketsInQueue() << endl;
     cout << "P idle: " << results.GetIdleTimePercent() << endl;
+    cout << endl;
 }
