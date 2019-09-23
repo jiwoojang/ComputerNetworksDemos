@@ -87,8 +87,9 @@ void MM1KQueue::ProcessQueue()
         }
     }
 
-    cout << "E[N]: " << results.GetAveragePacketsInQueue() << endl;
-    cout << "P idle: " << results.GetIdleTimePercent() << endl;
-    cout << "P dropped: " << results.GetDroppedPacketPercent() << endl;
-    cout << endl;
+    cout << K << ",";
+    cout << (alpha/5.0)*2000/1000000 << ",";
+    cout << results.GetAveragePacketsInQueue() << ",";
+    cout << results.GetIdleTimePercent() << ",";
+    cout << results.GetDroppedPacketPercent() << endl;
 }

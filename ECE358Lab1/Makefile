@@ -4,7 +4,7 @@ CC := clang++
 CFLAGS := -stdlib=libc++
 
 CXX := clang++
-CXXFLAGS := -std=c++17
+CXXFLAGS := -std=c++11
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./

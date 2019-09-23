@@ -46,9 +46,9 @@ void Question3() {
     cout << "//////////////////////////////////////////////////" << endl;
     cout << endl;
     
+    cout << "Rho,E[N],P idle" << endl;
     for (float i = 0.25f; i < 1.05f; i += 0.1f)
     {
-        cout << "Rho: " << i << endl;
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
@@ -68,6 +68,7 @@ void Question4() {
     
     double lambda =  1.2f * LINKRATE / MEANPACKETLENGTH;
 
+    cout << "Rho,E[N],P idle" << endl;
     MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
     queue.InitalizeQueue(1000.0f);
     queue.ProcessQueue();
@@ -77,7 +78,6 @@ void Question6GraphAnalysis(int K, float startRho, float endRho, float stepSize)
 {
     for (float i = startRho; i < (endRho + stepSize); i += stepSize)
     {
-        cout << "Rho: " << i << endl;
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1KQueue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE, K);
@@ -100,6 +100,7 @@ void Question6()
     cout << "//////////////////////////////////////////////////" << endl;
     cout << endl;
 
+    cout << "K, Rho,E[N],P idle, P dropped" << endl;
     Question6GraphAnalysis(10, 0.5f, 1.5f, 0.1f);
     Question6GraphAnalysis(25, 0.5f, 1.5f, 0.1f);
     Question6GraphAnalysis(50, 0.5f, 1.5f, 0.1f);
@@ -109,6 +110,7 @@ void Question6()
     cout << "//////////////////////////////////////////////////" << endl;
     cout << endl;
 
+    cout << "K, Rho,E[N],P idle, P dropped" << endl;
     Question6GraphAnalysis(10, 0.4f, 2.0f, 0.1f);
     Question6GraphAnalysis(25, 0.4f, 2.0f, 0.1f);
     Question6GraphAnalysis(50, 0.4f, 2.0f, 0.1f);
