@@ -38,7 +38,8 @@ void Question1() {
 }
 
 void Question3() {
-    
+
+    cout << endl;
     cout << "//////////////////////////////////////////////////" << endl;
     cout << "//                                              //" << endl;
     cout << "//                  QUESTION 3                  //" << endl;
@@ -52,13 +53,14 @@ void Question3() {
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
-        queue.InitalizeQueue(1000.0f);
+        queue.InitalizeQueue(2000.0f);
         queue.ProcessQueue();
     }
 }
 
 void Question4() {
 
+    cout << endl;
     cout << "//////////////////////////////////////////////////" << endl;
     cout << "//                                              //" << endl;
     cout << "//                  QUESTION 4                  //" << endl;
@@ -70,7 +72,7 @@ void Question4() {
 
     cout << "Rho,E[N],P idle" << endl;
     MM1Queue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE);
-    queue.InitalizeQueue(1000.0f);
+    queue.InitalizeQueue(2000.0f);
     queue.ProcessQueue();
 }
 
@@ -81,13 +83,14 @@ void Question6GraphAnalysis(int K, float startRho, float endRho, float stepSize)
         double lambda = i * LINKRATE / MEANPACKETLENGTH;
 
         MM1KQueue queue(lambda, MEANPACKETLENGTH, lambda * 5, LINKRATE, K);
-        queue.InitalizeQueue(1000.0f, false);
+        queue.InitalizeQueue(2000.0f, false);
         queue.ProcessQueue();
     }
 }
 
-void Question6()
-{
+void Question6() {
+
+    cout << endl;
     cout << "//////////////////////////////////////////////////" << endl;
     cout << "//                                              //" << endl;
     cout << "//                  QUESTION 6                  //" << endl;
@@ -100,27 +103,28 @@ void Question6()
     cout << "//////////////////////////////////////////////////" << endl;
     cout << endl;
 
-    cout << "K, Rho,E[N],P idle, P dropped" << endl;
+    cout << "K,Rho,E[N],P idle,P dropped" << endl;
     Question6GraphAnalysis(10, 0.5f, 1.5f, 0.1f);
     Question6GraphAnalysis(25, 0.5f, 1.5f, 0.1f);
     Question6GraphAnalysis(50, 0.5f, 1.5f, 0.1f);
 
+    cout << endl;
     cout << "//////////////////////////////////////////////////" << endl;
     cout << "//                PLoss Analysis                //" << endl;
     cout << "//////////////////////////////////////////////////" << endl;
     cout << endl;
 
-    cout << "K, Rho,E[N],P idle, P dropped" << endl;
+    cout << "K,Rho,E[N],P idle,P dropped" << endl;
     Question6GraphAnalysis(10, 0.4f, 2.0f, 0.1f);
-    Question6GraphAnalysis(25, 0.4f, 2.0f, 0.1f);
-    Question6GraphAnalysis(50, 0.4f, 2.0f, 0.1f);
-
     Question6GraphAnalysis(10, 2.0f, 5.0f, 0.2f);
-    Question6GraphAnalysis(25, 2.0f, 5.0f, 0.2f);
-    Question6GraphAnalysis(50, 2.0f, 5.0f, 0.2f);
-
     Question6GraphAnalysis(10, 5.0f, 10.0f, 0.4f);
+
+    Question6GraphAnalysis(25, 0.4f, 2.0f, 0.1f);
+    Question6GraphAnalysis(25, 2.0f, 5.0f, 0.2f);
     Question6GraphAnalysis(25, 5.0f, 10.0f, 0.4f);
+    
+    Question6GraphAnalysis(50, 0.4f, 2.0f, 0.1f);
+    Question6GraphAnalysis(50, 2.0f, 5.0f, 0.2f);
     Question6GraphAnalysis(50, 5.0f, 10.0f, 0.4f);
 }
 
