@@ -10,5 +10,6 @@ class MM1KQueue : public EventQueue
 {
 public:
     MM1KQueue(double newLambda, int newL, double newAlpha, int newC, int newK);
+    // Processes according to MM1K
     void ProcessQueue() override;
 };

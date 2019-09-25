@@ -9,6 +9,7 @@ EventQueue::~EventQueue() {
 
 void EventQueue::ProcessQueue() {}
 
+// Utility function used to sort events by time
 bool locSortEventByTime(const Event& firstEvent, const Event& secondEvent)
 {
     return firstEvent.GetProcessTime() < secondEvent.GetProcessTime();

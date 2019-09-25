@@ -4,4 +4,4 @@ With `clang` installed with C++17 support, simply run `make` in the project dire
 
 ### Running
 Run `make run`
-This will build and run the executable
+This will build and run the executable. The executable outputs data used in answering each question.

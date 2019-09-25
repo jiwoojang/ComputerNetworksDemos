@@ -38,6 +38,7 @@ void MM1KQueue::ProcessQueue()
                 }
                 else 
                 {
+                    // Determine departure timme based on random size and the last element in the packet queu
                     double packetLength = numGen.GenerateRandomValue(1.0f/L);
                     double serviceTime = (packetLength / C);
                     double departureTime = 0;
@@ -50,6 +51,7 @@ void MM1KQueue::ProcessQueue()
                         departureTime = packetQueue.back().GetProcessTime() + serviceTime;
                     }
 
+                    // Store new departure event in packet queue
                     Event departureEvent(Event::EventType::Departure, departureTime);
                     packetQueue.push(departureEvent);
 
@@ -87,6 +89,8 @@ void MM1KQueue::ProcessQueue()
         }
     }
 
+
+    // Print CSV output
     cout << K << ",";
     cout << (alpha/5.0)*2000/1000000 << ",";
     cout << results.GetAveragePacketsInQueue() << ",";

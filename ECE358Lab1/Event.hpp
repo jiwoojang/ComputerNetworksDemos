@@ -20,6 +20,5 @@ public:
 
 private:
     EventType eventType = Invalid;
-    // TODO: Figure out if there are better portable versions of floats
     double processTime = 0.0f;
 };
