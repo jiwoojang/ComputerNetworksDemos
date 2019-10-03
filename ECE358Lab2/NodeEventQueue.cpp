@@ -44,25 +44,7 @@ bool NodeEventQueue::WillCollideWithTransmission(double transTime, double propDe
     double nextPacketTime = eventList.front().GetProcessTime();
 
     // Check for collision
-    if (nextPacketTime < transTime + propDelay)
-    {
-        ++totalTransmissions;
-        ++collisions;
-
-        if (collisions > 10)
-        {
-            // Drop the packet
-            eventList.pop_front();
-
-            // Reset counter
-            collisions = 0;
-        }
-
-        return true;
-    }
-
-
-    return false;
+    return nextPacketTime < transTime + propDelay;
 }
 
 bool NodeEventQueue::WillBusyWait(double transTime, double propDelay, double transDelay)
@@ -103,7 +85,7 @@ void NodeEventQueue::ApplyBusyWait(double transTime, double propDelay, double tr
     }
 }
 
-void NodeEventQueue::SuccessfullyTransmitPacket()
+void NodeEventQueue::TransmitPacketSuccessfully()
 {
     ++totalTransmissions;
 
@@ -112,4 +94,19 @@ void NodeEventQueue::SuccessfullyTransmitPacket()
 
     // Transmit the packet
     eventList.pop_front();
+}
+
+void NodeEventQueue::TransmitPacketWithCollision()
+{
+    ++totalTransmissions;
+    ++collisions;
+
+    if (collisions > 10)
+    {
+        // Drop the packet
+        eventList.pop_front();
+
+        // Reset counter
+        collisions = 0;
+    }
 }

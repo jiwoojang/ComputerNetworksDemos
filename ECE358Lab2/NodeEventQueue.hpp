@@ -17,7 +17,9 @@ public:
     void ApplyExponentialBackOff(double transTime, double propDelay, double transDelay);
     void ApplyBusyWait(double transTime, double propDelay, double transDelay);
 
-    void SuccessfullyTransmitPacket();
+    void TransmitPacketSuccessfully();
+    void TransmitPacketWithCollision();
+    
 private:
     double lambda;
     double R; 
