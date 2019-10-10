@@ -13,6 +13,8 @@ public:
     void InitalizeQueue(double simulationTime);
     bool WillCollideWithTransmission(double transTime, double propDelay, double transDelay);
     bool WillBusyWait(double transTime, double propDelay, double transDelay);
+
+    double GetNextEventTime();
     
     void ApplyExponentialBackOff(double transTime, double propDelay, double transDelay);
     void ApplyBusyWait(double transTime, double propDelay, double transDelay);

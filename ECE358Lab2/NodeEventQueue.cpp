@@ -38,13 +38,17 @@ void NodeEventQueue::InitalizeQueue(double simulationTime) {
     eventList.sort(locSortEventByTime);
 }
 
+void NodeEventQueue::GetNextEventTime() {
+    return eventList.front().GetProcessTime();
+}
+
 bool NodeEventQueue::WillCollideWithTransmission(double transTime, double propDelay, double transDelay)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
 
     // Check for collision
-    return nextPacketTime < transTime + propDelay;
+    return nextPacketTime < (transTime + propDelay);
 }
 
 bool NodeEventQueue::WillBusyWait(double transTime, double propDelay, double transDelay)

@@ -1,6 +1,8 @@
 #pragma once
 #include "NodeEventQueue.hpp"
 
+#include <vector>
+
 class CSMACDNetwork
 {
 public:
@@ -9,6 +11,12 @@ public:
     {
         Persistent,
         NonPersistent
+    };
+
+    struct Packet {
+        double startTime;
+        double endTime;
+        uint startPosition;
     };
 
     CSMACDNetwork(PersistenceType newPersistenceType, int newN, int newR, int newL, double newA, double newD, double newS);
@@ -26,7 +34,11 @@ private:
     double D;
     double S;
 
+    std::vector<NodeEventQueue> nodes;
+
     // Simulation Parameters
     double simulationTime;
     PersistenceType persistenceType;
+
+    Packet lastPacket;
 };
