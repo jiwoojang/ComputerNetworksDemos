@@ -3,20 +3,19 @@
 
 #include <vector>
 
+enum class PersistenceType
+{
+    Persistent,
+    NonPersistent
+};
+
 class CSMACDNetwork
 {
 public:
-
-    enum PersistenceType
-    {
-        Persistent,
-        NonPersistent
-    };
-
     struct Packet {
-        double startTime;
-        double endTime;
-        uint startPosition;
+        double startTime = 0;
+        double endTime = 0;
+        int startPosition =  -1;
     };
 
     CSMACDNetwork(PersistenceType newPersistenceType, int newN, int newR, int newL, double newA, double newD, double newS);
@@ -40,5 +39,6 @@ private:
     double simulationTime;
     PersistenceType persistenceType;
 
+    double propDelay;
     Packet lastPacket;
 };

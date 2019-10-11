@@ -10,7 +10,7 @@ public:
     NodeEventQueue(double newLambda, double newR);
     ~NodeEventQueue();
     
-    void InitalizeQueue(double simulationTime);
+    void InitializeQueue(double simulationTime);
     bool WillCollideWithTransmission(double transTime, double propDelay, double transDelay);
     bool WillBusyWait(double transTime, double propDelay, double transDelay);
 
@@ -30,6 +30,6 @@ private:
     int successfulTransmissions; 
     int totalTransmissions;
 
-    RandomNumberGenerator numGen;
+    static RandomNumberGenerator numGen;
     list<Event> eventList;
 };

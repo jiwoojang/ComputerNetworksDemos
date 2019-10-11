@@ -4,6 +4,9 @@
 #include "NodeEventQueue.hpp"
 #include "Event.hpp"
 
+// Initialize the random number generator once for all instances of the class
+RandomNumberGenerator NodeEventQueue::numGen;
+
 NodeEventQueue::NodeEventQueue(double newLambda, double newR)
 {
     lambda = newLambda;
@@ -20,7 +23,7 @@ bool locSortEventByTime(const Event& firstEvent, const Event& secondEvent)
     return firstEvent.GetProcessTime() < secondEvent.GetProcessTime();
 }
 
-void NodeEventQueue::InitalizeQueue(double simulationTime) {
+void NodeEventQueue::InitializeQueue(double simulationTime) {
     double time = 0.0f;
 
     while(time < simulationTime)   
@@ -38,7 +41,7 @@ void NodeEventQueue::InitalizeQueue(double simulationTime) {
     eventList.sort(locSortEventByTime);
 }
 
-void NodeEventQueue::GetNextEventTime() {
+double NodeEventQueue::GetNextEventTime() {
     return eventList.front().GetProcessTime();
 }
 
@@ -65,6 +68,7 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime, double propDelay,
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisions) - 1.0f);
     
     // TODO: Should this include tProp?
+    // jruhland: don't think so
     double waitTime = randomMultiplier * 512.0f/R + transTime;
 
     for (Event packetArrival : eventList)
@@ -73,6 +77,12 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime, double propDelay,
         {
             packetArrival.SetProcessTime(waitTime);
         }
+        else 
+        {
+            // Otherwise we always iterate through the entire list
+            break;
+        }
+
     }
 }
 
