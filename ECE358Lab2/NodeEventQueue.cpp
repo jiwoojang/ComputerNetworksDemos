@@ -12,7 +12,8 @@ NodeEventQueue::NodeEventQueue(double newLambda, double newR)
     lambda = newLambda;
     R = newR;
 
-    collisions = 0;
+    collisionCounter = 0;
+    totalCollisions = 0;
     successfulTransmissions = 0; 
     totalTransmissions = 0;
 }
@@ -89,7 +90,7 @@ bool NodeEventQueue::WillBusyWait(double transTime, int distance)
 void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 {
     // TODO: Keep an eye on the performance of pow here, if its really gross we should just pre multiply it
-    double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisions) - 1.0f);
+    double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
     
     // TODO: Should this include tProp?
     // jruhland: don't think so
@@ -136,20 +137,21 @@ void NodeEventQueue::TransmitPacketSuccessfully()
 void NodeEventQueue::TransmitPacketWithCollision()
 {
     ++totalTransmissions;
-    ++collisions;
+    ++totalCollisions;
+    ++collisionCounter;
 
-    if (collisions > 10)
+    if (collisionCounter > 10)
     {
         // Drop the packet
         eventList.pop_front();
 
         // Reset counter
-        collisions = 0;
+        collisionCounter = 0;
     }
 }
 
 NodeEventQueue::NodeResult NodeEventQueue::GetPerformanceStats() {
     std::cout << "Transmissions, Successes, Collisions" << endl;
-    std::cout << totalTransmissions << "," << successfulTransmissions << "," << collisions << std::endl;
-    return {totalTransmissions, successfulTransmissions, collisions};
+    std::cout << totalTransmissions << "," << successfulTransmissions << "," << totalCollisions << std::endl;
+    return {totalTransmissions, successfulTransmissions, totalCollisions};
 }

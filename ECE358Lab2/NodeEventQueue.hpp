@@ -41,7 +41,9 @@ private:
     double propDelay;
     double transDelay;
 
-    int collisions;
+    int collisionCounter;
+
+    int totalCollisions;
     int successfulTransmissions; 
     int totalTransmissions;
 

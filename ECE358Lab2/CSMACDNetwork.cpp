@@ -65,7 +65,6 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
 }
 
 CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
-    int i=0;
     int index=0;
 
     while (true) {
@@ -74,27 +73,28 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         if (index < 0) break;
 
         double packetTransTime = nodes[index].GetNextEventTime();
-        i++;
 
         // Find the 1st collision that will occur
-        double lowestCollisionTime = -1;
+        double lowestCollisionTime = DBL_MAX;
+        int collisionIndex = -1;
+
         for (int i=0; i<N; i++) {
             if (i==index) continue;
 
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
-                if (nodes[i].GetNextEventTime() < lowestCollisionTime) {
-                    std::cout << "COLLISION" << std::endl;
+                if (nodes[i].GetNextEventTime() < lowestCollisionTime && nodes[i].GetNextEventTime() > 0) {
                     lowestCollisionTime = nodes[i].GetNextEventTime();
+                    collisionIndex = i;
                 };
             }
         }
 
         // Process effects of collision
-        if (lowestCollisionTime > 0) {
+        if (collisionIndex > 0) {
             nodes[index].TransmitPacketWithCollision();
-            nodes[i].TransmitPacketWithCollision();
+            nodes[collisionIndex].TransmitPacketWithCollision();
             nodes[index].ApplyExponentialBackOff(lowestCollisionTime);
-            nodes[i].ApplyExponentialBackOff(lowestCollisionTime);
+            nodes[collisionIndex].ApplyExponentialBackOff(lowestCollisionTime);
             continue;
         }
         // Apply busy wait where applicable
