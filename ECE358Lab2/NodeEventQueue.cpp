@@ -41,8 +41,23 @@ void NodeEventQueue::InitializeQueue(double simulationTime) {
     eventList.sort(locSortEventByTime);
 }
 
+int NodeEventQueue::GetQueueSize() {
+    return eventList.size();
+}
+
 double NodeEventQueue::GetNextEventTime() {
-    return eventList.front().GetProcessTime();
+    if (eventList.size() > 0) {
+        return eventList.front().GetProcessTime();
+    }
+    else {
+        return -1;
+    }
+}
+
+void NodeEventQueue::PopEvent() {
+    if (eventList.size() > 0) {
+        eventList.pop_front();
+    }
 }
 
 bool NodeEventQueue::WillCollideWithTransmission(double transTime, double propDelay, double transDelay)

@@ -7,6 +7,7 @@
 class NodeEventQueue 
 {
 public:
+
     NodeEventQueue(double newLambda, double newR);
     ~NodeEventQueue();
     
@@ -15,6 +16,8 @@ public:
     bool WillBusyWait(double transTime, double propDelay, double transDelay);
 
     double GetNextEventTime();
+    int GetQueueSize();
+    void PopEvent();
     
     void ApplyExponentialBackOff(double transTime, double propDelay, double transDelay);
     void ApplyBusyWait(double transTime, double propDelay, double transDelay);
@@ -22,6 +25,7 @@ public:
     void TransmitPacketSuccessfully();
     void TransmitPacketWithCollision();
     
+    static RandomNumberGenerator numGen;
 private:
     double lambda;
     double R; 
@@ -30,6 +34,5 @@ private:
     int successfulTransmissions; 
     int totalTransmissions;
 
-    static RandomNumberGenerator numGen;
     list<Event> eventList;
 };

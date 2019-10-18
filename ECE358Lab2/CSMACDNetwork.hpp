@@ -13,9 +13,9 @@ class CSMACDNetwork
 {
 public:
     struct Packet {
-        double startTime = 0;
-        double endTime = 0;
-        int startPosition =  -1;
+        double startTime;
+        double endTime;
+        int startIndex;
     };
 
     CSMACDNetwork(PersistenceType newPersistenceType, int newN, int newR, int newL, double newA, double newD, double newS);
@@ -23,6 +23,7 @@ public:
 
     void InitializeNetwork();
     void RunSimulation();
+    bool GetNextPacket();
 
 private: 
     // Network Parameters
