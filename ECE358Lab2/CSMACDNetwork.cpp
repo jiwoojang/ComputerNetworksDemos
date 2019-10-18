@@ -3,21 +3,15 @@
 #include <cfloat>
 #include <iostream>
 
-CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, int newR, int newL, double newA, double newD, double newS) {
+CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA) {
     persistenceType = newPersistenceType;
     N = newN;
-    R = newR;
-    L = newL;
     A = newA;
-    D = newD;
-    S = newS;
 
     simulationTime = 1000;
     propDelay = D/S;
-
-    lastPacket.startTime = 0;
-    lastPacket.endTime = 0;
-    lastPacket.startIndex =  -1;
+    // All packets have same length here
+    transDelay = L/R;
 }
 
 CSMACDNetwork::~CSMACDNetwork() {}
@@ -25,44 +19,95 @@ CSMACDNetwork::~CSMACDNetwork() {}
 void CSMACDNetwork::InitializeNetwork() {
     for (int i=0; i<N; i++) {
         NodeEventQueue newNode(A, R);
-        newNode.InitializeQueue(simulationTime);
+        newNode.InitializeQueue(simulationTime, propDelay, transDelay);
         nodes.push_back(newNode);
     }
 }
 
-bool CSMACDNetwork::GetNextPacket() {
-    double startTime = DBL_MAX;
-    uint index = 0;
-    bool found = false;
+// Find next packet after startTime
+int CSMACDNetwork::GetNextPacketIndex(double startTime) {
+    double packetTime = DBL_MAX;
+    uint index = -1;
 
     for (uint i=0; i < nodes.size(); i++) {
-        if (nodes[i].GetQueueSize() > 0 && nodes[i].GetNextEventTime() < startTime) {
-            startTime = nodes[i].GetNextEventTime();
+        double currPacketTime = nodes[i].GetNextEventTime();
+        if (nodes[i].GetQueueSize() > 0 
+            && nodes[i].GetNextEventTime() < packetTime
+            && nodes[i].GetNextEventTime() > startTime) 
+        {
             index = i;
-            found = true;
+            packetTime = currPacketTime;
         }
     }
 
-    if (found) {
-        lastPacket.startTime = startTime;
-
-        double packetLength = nodes[index].numGen.GenerateRandomPoissonValue(1.0f/L);
-        double serviceTime = (packetLength / R);
-
-        lastPacket.endTime = packetLength + serviceTime;
-        lastPacket.startIndex = index;
-
-        nodes[index].PopEvent();
-    }
-    return found;
+    return index;
 }
 
-void CSMACDNetwork::RunSimulation() {
-    int i=0;
-    while (GetNextPacket()) {
-        i++;
-        std::cout << lastPacket.startTime << std::endl;
+CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
+    double totalTransmissions = 0;
+    double totalCollisions = 0;
+    double totalSucesses = 0;
+
+    for (NodeEventQueue node: nodes) {
+        NodeEventQueue::NodeResult nodeResult = node.GetPerformanceStats();
+
+        totalTransmissions += nodeResult.transmissions;
+        totalCollisions += nodeResult.collisions;
+        totalSucesses += nodeResult.successes;
     }
-    std::cout << i <<  " packets generated" << std::endl;
-    return;
+    std::cout << "Transmissions, Successes, Collisions" << endl;
+    std::cout << totalTransmissions << "," << totalSucesses << "," << totalCollisions << std::endl;
+    
+    double throughput = (totalSucesses * L) / simulationTime;
+    double efficiency = totalSucesses / totalTransmissions;
+
+    return {throughput, efficiency};
+}
+
+CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
+    int i=0;
+    int index=0;
+
+    while (true) {
+        // Scan for next packet
+        index = GetNextPacketIndex();
+        if (index < 0) break;
+
+        double packetTransTime = nodes[index].GetNextEventTime();
+        i++;
+
+        // Find the 1st collision that will occur
+        double lowestCollisionTime = -1;
+        for (int i=0; i<N; i++) {
+            if (i==index) continue;
+
+            if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
+                if (nodes[i].GetNextEventTime() < lowestCollisionTime) {
+                    std::cout << "COLLISION" << std::endl;
+                    lowestCollisionTime = nodes[i].GetNextEventTime();
+                };
+            }
+        }
+
+        // Process effects of collision
+        if (lowestCollisionTime > 0) {
+            nodes[index].TransmitPacketWithCollision();
+            nodes[i].TransmitPacketWithCollision();
+            nodes[index].ApplyExponentialBackOff(lowestCollisionTime);
+            nodes[i].ApplyExponentialBackOff(lowestCollisionTime);
+            continue;
+        }
+        // Apply busy wait where applicable
+        else {
+            for (int i=0; i<N; i++) {
+                if (nodes[i].WillBusyWait(packetTransTime, abs(index-i))) {
+                    nodes[i].ApplyBusyWait(packetTransTime, abs(index-i));
+                }
+            }
+        }
+
+        nodes[index].TransmitPacketSuccessfully();
+    }
+
+    return CalculatePerformance();
 }

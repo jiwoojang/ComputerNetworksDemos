@@ -10,25 +10,36 @@ public:
 
     NodeEventQueue(double newLambda, double newR);
     ~NodeEventQueue();
+
+    struct NodeResult {
+        int transmissions;
+        int successes;
+        int collisions;
+    };
     
-    void InitializeQueue(double simulationTime);
-    bool WillCollideWithTransmission(double transTime, double propDelay, double transDelay);
-    bool WillBusyWait(double transTime, double propDelay, double transDelay);
+    void InitializeQueue(double simulationTime, double newPropDelay, double newTransDelay);
+    bool WillCollideWithTransmission(double transTime, int distance);
+    bool WillBusyWait(double transTime, int distance);
 
     double GetNextEventTime();
     int GetQueueSize();
     void PopEvent();
     
-    void ApplyExponentialBackOff(double transTime, double propDelay, double transDelay);
-    void ApplyBusyWait(double transTime, double propDelay, double transDelay);
+    void ApplyExponentialBackOff(double transTime);
+    void ApplyBusyWait(double transTime, int distance);
 
     void TransmitPacketSuccessfully();
     void TransmitPacketWithCollision();
+
+    NodeResult GetPerformanceStats();
     
     static RandomNumberGenerator numGen;
 private:
     double lambda;
     double R; 
+
+    double propDelay;
+    double transDelay;
 
     int collisions;
     int successfulTransmissions; 

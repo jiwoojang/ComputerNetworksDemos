@@ -3,10 +3,15 @@
 #include "CSMACDNetwork.hpp"
 using namespace std;
 
+
+
 int main() {
     cout << "Running Main" << endl;
 
-    CSMACDNetwork simulation(PersistenceType::Persistent, 20, 1e6, 1500, 7, 10, 2e8);
+    // See CSMACDNetwork.hpp for network simulation constant parameters
+    CSMACDNetwork simulation(PersistenceType::Persistent, 40, 20);
     simulation.InitializeNetwork();
-    simulation.RunSimulation();
+    
+    CSMACDNetwork::SimulationResult result = simulation.RunSimulation();
+    std::cout << result.throughput << "," << result.efficiency << std::endl;
 }

@@ -18,21 +18,30 @@ public:
         int startIndex;
     };
 
-    CSMACDNetwork(PersistenceType newPersistenceType, int newN, int newR, int newL, double newA, double newD, double newS);
+    struct SimulationResult {
+        double throughput;
+        double efficiency;
+    };
+
+    CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA);
     ~CSMACDNetwork();
 
     void InitializeNetwork();
-    void RunSimulation();
-    bool GetNextPacket();
+    SimulationResult RunSimulation();
+    int GetNextPacketIndex(double startTime=0);
 
 private: 
+    SimulationResult CalculatePerformance();
+
     // Network Parameters
     int N;
     double A;
-    int R;
-    int L;
-    double D;
-    double S;
+
+    // Constant values given in lab manual that hold accross all questions
+    const double R = 1e6; // 1 Mbps
+    const int L = 1500; // 1500 bits/packet
+    const double D = 10.0; // 10 m between nodes
+    const double S = 2e8; // 2/3 of speed of light in m/s
 
     std::vector<NodeEventQueue> nodes;
 
@@ -41,5 +50,8 @@ private:
     PersistenceType persistenceType;
 
     double propDelay;
-    Packet lastPacket;
+    double transDelay;
+
+    Packet currentPacket;
+    Packet nextPacket;
 };

@@ -11,6 +11,10 @@ NodeEventQueue::NodeEventQueue(double newLambda, double newR)
 {
     lambda = newLambda;
     R = newR;
+
+    collisions = 0;
+    successfulTransmissions = 0; 
+    totalTransmissions = 0;
 }
 
 NodeEventQueue::~NodeEventQueue() {
@@ -23,8 +27,11 @@ bool locSortEventByTime(const Event& firstEvent, const Event& secondEvent)
     return firstEvent.GetProcessTime() < secondEvent.GetProcessTime();
 }
 
-void NodeEventQueue::InitializeQueue(double simulationTime) {
+void NodeEventQueue::InitializeQueue(double simulationTime, double newPropDelay, double newTransDelay) {
     double time = 0.0f;
+
+    propDelay = newPropDelay;
+    transDelay = newTransDelay;
 
     while(time < simulationTime)   
     {
@@ -60,24 +67,26 @@ void NodeEventQueue::PopEvent() {
     }
 }
 
-bool NodeEventQueue::WillCollideWithTransmission(double transTime, double propDelay, double transDelay)
+bool NodeEventQueue::WillCollideWithTransmission(double transTime, int distance)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
 
     // Check for collision
-    return nextPacketTime < (transTime + propDelay);
+    //std::cout << nextPacketTime << "," << (transTime + (distance*propDelay)) << std::endl;
+    return (nextPacketTime < (transTime + (distance*propDelay)));
 }
 
-bool NodeEventQueue::WillBusyWait(double transTime, double propDelay, double transDelay)
+bool NodeEventQueue::WillBusyWait(double transTime, int distance)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
 
-    return (nextPacketTime > transTime + propDelay) && (nextPacketTime < transTime + propDelay + transDelay);
+    return (nextPacketTime > transTime + (distance*propDelay)) && (nextPacketTime < (transTime + (distance*propDelay) + transDelay) );
 }
 
-void NodeEventQueue::ApplyExponentialBackOff(double transTime, double propDelay, double transDelay)
+// transtime is collision time is using greedy method
+void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 {
     // TODO: Keep an eye on the performance of pow here, if its really gross we should just pre multiply it
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisions) - 1.0f);
@@ -97,13 +106,12 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime, double propDelay,
             // Otherwise we always iterate through the entire list
             break;
         }
-
     }
 }
 
-void NodeEventQueue::ApplyBusyWait(double transTime, double propDelay, double transDelay)
+void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
-    double waitTime = transTime + propDelay + transDelay;
+    double waitTime = transTime + (distance*propDelay) + transDelay;
 
     for (Event packetArrival : eventList)
     {
@@ -138,4 +146,10 @@ void NodeEventQueue::TransmitPacketWithCollision()
         // Reset counter
         collisions = 0;
     }
+}
+
+NodeEventQueue::NodeResult NodeEventQueue::GetPerformanceStats() {
+    std::cout << "Transmissions, Successes, Collisions" << endl;
+    std::cout << totalTransmissions << "," << successfulTransmissions << "," << collisions << std::endl;
+    return {totalTransmissions, successfulTransmissions, collisions};
 }
