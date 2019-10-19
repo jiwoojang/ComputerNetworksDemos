@@ -13,6 +13,7 @@ NodeEventQueue::NodeEventQueue(double newLambda, double newR)
     R = newR;
 
     collisionCounter = 0;
+    busyBackOffCounter = 0;
     totalCollisions = 0;
     successfulTransmissions = 0; 
     totalTransmissions = 0;
@@ -68,17 +69,26 @@ void NodeEventQueue::PopEvent() {
     }
 }
 
+void NodeEventQueue::ResetBusyBackOffCounter()
+{
+    busyBackOffCounter = 0;
+}
+
+void NodeEventQueue::ResetCollisionCounter()
+{
+    collisionCounter = 0;
+}
+
 bool NodeEventQueue::WillCollideWithTransmission(double transTime, int distance)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
 
     // Check for collision
-    //std::cout << nextPacketTime << "," << (transTime + (distance*propDelay)) << std::endl;
     return (nextPacketTime < (transTime + (distance*propDelay)));
 }
 
-bool NodeEventQueue::WillBusyWait(double transTime, int distance)
+bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
@@ -89,12 +99,21 @@ bool NodeEventQueue::WillBusyWait(double transTime, int distance)
 // transtime is collision time is using greedy method
 void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 {
+    ++collisionCounter;
+    
+    if (collisionCounter > 10)
+    {
+        // Drop the packet
+        PopEvent();
+
+        // Reset counter
+        ResetCollisionCounter();
+        return;
+    }
+
     // TODO: Keep an eye on the performance of pow here, if its really gross we should just pre multiply it
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
-    
-    // TODO: Should this include tProp?
-    // jruhland: don't think so
-    double waitTime = randomMultiplier * 512.0f/R + transTime;
+    double waitTime = (randomMultiplier * 512.0f/R) + transTime;
 
     for (Event packetArrival : eventList)
     {
@@ -104,7 +123,6 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
         }
         else 
         {
-            // Otherwise we always iterate through the entire list
             break;
         }
     }
@@ -112,7 +130,7 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 
 void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
-    double waitTime = transTime + (distance*propDelay) + transDelay;
+    double waitTime = (transTime + (distance*propDelay)) + transDelay;
 
     for (Event packetArrival : eventList)
     {
@@ -123,30 +141,60 @@ void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
     }
 }
 
+void NodeEventQueue::ApplyBusyExponentialBackOff()
+{
+    ++busyBackOffCounter;
+
+    if (busyBackOffCounter > 10)
+    {
+        // Drop the packet
+        PopEvent();
+
+        busyBackOffCounter = 0;
+        ResetCollisionCounter();
+        return;
+    }
+
+    double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
+    double waitTime = (randomMultiplier * 512.0f/R) + eventList.front().GetProcessTime();
+
+    for (Event packetArrival : eventList)
+    {
+        if (packetArrival.GetProcessTime() < waitTime)
+        {
+            packetArrival.SetProcessTime(waitTime);
+        }
+        else 
+        {
+            break;
+        }
+    }
+}
+
 void NodeEventQueue::TransmitPacketSuccessfully()
 {
-    ++totalTransmissions;
+    if (!eventList.empty())
+    {
+        ++totalTransmissions;
 
-    // Success!
-    ++successfulTransmissions;
+        // Success!
+        ++successfulTransmissions;
 
-    // Transmit the packet
-    eventList.pop_front();
+        ResetCollisionCounter();
+
+        // Transmit the packet
+        PopEvent();
+    }
 }
 
 void NodeEventQueue::TransmitPacketWithCollision()
 {
-    ++totalTransmissions;
-    ++totalCollisions;
-    ++collisionCounter;
-
-    if (collisionCounter > 10)
+    if (!eventList.empty())
     {
-        // Drop the packet
-        eventList.pop_front();
+        ++totalTransmissions;
 
-        // Reset counter
-        collisionCounter = 0;
+        // Record the collision
+        ++totalCollisions;
     }
 }
 

@@ -73,6 +73,12 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         if (index < 0) break;
 
         double packetTransTime = nodes[index].GetNextEventTime();
+        
+        // If a node is ready to transmit, then reset its busy backoff counter if being used
+        if (persistenceType == PersistenceType::NonPersistent)
+        {
+            nodes[index].ResetBusyBackOffCounter();
+        }
 
         // Find the 1st collision that will occur
         double lowestCollisionTime = DBL_MAX;
@@ -94,14 +100,28 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             nodes[index].TransmitPacketWithCollision();
             nodes[collisionIndex].TransmitPacketWithCollision();
             nodes[index].ApplyExponentialBackOff(lowestCollisionTime);
-            nodes[collisionIndex].ApplyExponentialBackOff(lowestCollisionTime);
+            nodes[collisionIndex].ApplyExponentialBackOff(lowestCollisionTime + abs(index-collisionIndex) * propDelay);
             continue;
         }
         // Apply busy wait where applicable
         else {
             for (int i=0; i<N; i++) {
-                if (nodes[i].WillBusyWait(packetTransTime, abs(index-i))) {
-                    nodes[i].ApplyBusyWait(packetTransTime, abs(index-i));
+                if (i==index) continue;
+
+                if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
+                    switch(persistenceType)
+                    {
+                        case PersistenceType::Persistent:
+                        {
+                            nodes[i].ApplyBusyWait(packetTransTime, abs(index-i));
+                            break;
+                        }
+                        case PersistenceType::NonPersistent:
+                        {
+                            nodes[i].ApplyBusyExponentialBackOff();
+                            break;
+                        }
+                    }
                 }
             }
         }

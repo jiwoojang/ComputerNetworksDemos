@@ -19,14 +19,18 @@ public:
     
     void InitializeQueue(double simulationTime, double newPropDelay, double newTransDelay);
     bool WillCollideWithTransmission(double transTime, int distance);
-    bool WillBusyWait(double transTime, int distance);
+    bool WillDetectBusBusy(double transTime, int distance);
 
     double GetNextEventTime();
     int GetQueueSize();
     void PopEvent();
+
+    void ResetBusyBackOffCounter();
+    void ResetCollisionCounter();
     
     void ApplyExponentialBackOff(double transTime);
     void ApplyBusyWait(double transTime, int distance);
+    void ApplyBusyExponentialBackOff();
 
     void TransmitPacketSuccessfully();
     void TransmitPacketWithCollision();
@@ -42,6 +46,7 @@ private:
     double transDelay;
 
     int collisionCounter;
+    int busyBackOffCounter;
 
     int totalCollisions;
     int successfulTransmissions; 
