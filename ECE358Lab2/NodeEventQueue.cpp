@@ -151,7 +151,7 @@ void NodeEventQueue::ApplyBusyExponentialBackOff()
         PopEvent();
 
         busyBackOffCounter = 0;
-        ResetCollisionCounter();
+        ResetBusyBackOffCounter();
         return;
     }
 

@@ -99,8 +99,8 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         if (collisionIndex > 0) {
             nodes[index].TransmitPacketWithCollision();
             nodes[collisionIndex].TransmitPacketWithCollision();
-            nodes[index].ApplyExponentialBackOff(lowestCollisionTime);
-            nodes[collisionIndex].ApplyExponentialBackOff(lowestCollisionTime + abs(index-collisionIndex) * propDelay);
+            nodes[index].ApplyExponentialBackOff(lowestCollisionTime + abs(index-collisionIndex) * propDelay);
+            nodes[collisionIndex].ApplyExponentialBackOff(lowestCollisionTime);
             continue;
         }
         // Apply busy wait where applicable
