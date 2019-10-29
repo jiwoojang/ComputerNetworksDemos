@@ -113,7 +113,7 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 
     // TODO: Keep an eye on the performance of pow here, if its really gross we should just pre multiply it
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
-    double waitTime = (randomMultiplier * 512.0f/R) + transTime;
+    double waitTime = (randomMultiplier * 512.0f/R) + transTime + transDelay;
 
     for (Event packetArrival : eventList)
     {

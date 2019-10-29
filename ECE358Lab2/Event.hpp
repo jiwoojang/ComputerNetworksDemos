@@ -16,7 +16,7 @@ public:
     ~Event(){};
 
     double GetProcessTime() const { return processTime; }
-    void SetProcessTime(double newProcessTime) const { newProcessTime = processTime; }
+    void SetProcessTime(double newProcessTime) { processTime = newProcessTime; }
     EventType GetEventType() const { return eventType; }
 
 private:
