@@ -87,29 +87,18 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         for (int i=0; i<N; i++) {
             if (i==index) continue;
 
+            // More than 1 collision can occur on one transmission
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
+                nodes[i].TransmitPacketWithCollision();
+                nodes[i].ApplyExponentialBackOff(packetTransTime + abs(index-i) * propDelay);
+
                 if (nodes[i].GetNextEventTime() < lowestCollisionTime && nodes[i].GetNextEventTime() > 0) {
                     lowestCollisionTime = nodes[i].GetNextEventTime();
                     collisionIndex = i;
                 };
             }
-        }
-
-        // Process effects of collision
-        if (collisionIndex > 0) {
-            nodes[index].TransmitPacketWithCollision();
-            nodes[collisionIndex].TransmitPacketWithCollision();
-            
-            // Assume all nodes see the collision at the time the second transmitter in the collision sees it
-            nodes[index].ApplyExponentialBackOff(packetTransTime + abs(index-collisionIndex) * propDelay);
-            nodes[collisionIndex].ApplyExponentialBackOff(packetTransTime + abs(index-collisionIndex) * propDelay);
-            continue;
-        }
-        // Apply busy wait where applicable
-        else {
-            for (int i=0; i<N; i++) {
-                if (i==index) continue;
-
+            else {
+                // Even if there is a collision going on, other nodes will still see the bus as busy
                 if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
                     switch(persistenceType)
                     {
@@ -128,7 +117,17 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             }
         }
 
-        nodes[index].TransmitPacketSuccessfully();
+        // Process effects of collision
+        if (collisionIndex > 0) {
+            nodes[index].TransmitPacketWithCollision();
+            
+            // If a collision occured the transmitting node will see it at the time of the first collision
+            nodes[index].ApplyExponentialBackOff(packetTransTime + abs(index-collisionIndex) * propDelay);
+        }
+        else
+        {
+            nodes[index].TransmitPacketSuccessfully();
+        }    
     }
 
     return CalculatePerformance();

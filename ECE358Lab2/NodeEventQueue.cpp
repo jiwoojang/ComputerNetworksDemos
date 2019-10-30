@@ -115,7 +115,7 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
     double waitTime = (randomMultiplier * 512.0f/R) + transTime + transDelay;
 
-    for (Event packetArrival : eventList)
+    for (Event& packetArrival : eventList)
     {
         if (packetArrival.GetProcessTime() < waitTime)
         {
@@ -132,7 +132,7 @@ void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
     double waitTime = (transTime + (distance*propDelay)) + transDelay;
 
-    for (Event packetArrival : eventList)
+    for (Event& packetArrival : eventList)
     {
         if (packetArrival.GetProcessTime() < waitTime)
         {
@@ -158,7 +158,7 @@ void NodeEventQueue::ApplyBusyExponentialBackOff()
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
     double waitTime = (randomMultiplier * 512.0f/R) + eventList.front().GetProcessTime();
 
-    for (Event packetArrival : eventList)
+    for (Event& packetArrival : eventList)
     {
         if (packetArrival.GetProcessTime() < waitTime)
         {
