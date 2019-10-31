@@ -136,9 +136,13 @@ void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 
     for (Event& packetArrival : eventList)
     {
+        // Events are stored in order
         if (packetArrival.GetProcessTime() < waitTime)
         {
             packetArrival.SetProcessTime(waitTime);
+        }
+        else {
+            break;
         }
     }
 }
