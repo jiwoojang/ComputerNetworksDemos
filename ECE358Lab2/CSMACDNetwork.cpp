@@ -30,9 +30,9 @@ int CSMACDNetwork::GetNextPacketIndex(double startTime) {
     uint index = -1;
 
     for (uint i=0; i < nodes.size(); i++) {
+        // If no data currPacketTime will be negative
         double currPacketTime = nodes[i].GetNextEventTime();
-        if (nodes[i].GetQueueSize() > 0 
-            && currPacketTime > startTime
+        if (currPacketTime > startTime
             && currPacketTime < packetTime) 
         {
             index = i;
@@ -90,6 +90,7 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             // More than 1 collision can occur on one transmission
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
                 nodes[i].TransmitPacketWithCollision();
+                // Collision occurs when signal from transmitted reaches node
                 nodes[i].ApplyExponentialBackOff(packetTransTime + abs(index-i) * propDelay);
 
                 if (nodes[i].GetNextEventTime() < lowestCollisionTime && nodes[i].GetNextEventTime() > 0) {
@@ -112,6 +113,8 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
                             nodes[i].ApplyBusyExponentialBackOff();
                             break;
                         }
+                        default:
+                            break;
                     }
                 }
             }

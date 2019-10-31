@@ -94,7 +94,8 @@ bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
 
-    return (nextPacketTime > transTime + (distance*propDelay)) && (nextPacketTime < (transTime + (distance*propDelay) + transDelay) );
+    double signalArivalTime = transTime + (distance*propDelay);
+    return (nextPacketTime > signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay) );
 }
 
 // transtime is collision time is using greedy method
@@ -113,9 +114,8 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
         return;
     }
 
-    // TODO: Keep an eye on the performance of pow here, if its really gross we should just pre multiply it
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
-    double waitTime = (randomMultiplier * 512.0f/R) + transTime + transDelay;
+    double waitTime = (randomMultiplier * 512.0f/R) + transTime + transDelay; //J: don't think we use transdelay here?
 
     for (Event& packetArrival : eventList)
     {
