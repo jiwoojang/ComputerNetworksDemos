@@ -8,7 +8,7 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
     N = newN;
     A = newA;
 
-    simulationTime = 1000;
+    simulationTime = 1000; // TODO move this to main.cpp and tune
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
@@ -24,7 +24,7 @@ void CSMACDNetwork::InitializeNetwork() {
     }
 }
 
-// Find next packet after startTime
+// Find node that contains the next packet after startTime
 int CSMACDNetwork::GetNextPacketIndex(double startTime) {
     double packetTime = DBL_MAX;
     uint index = -1;
@@ -32,8 +32,8 @@ int CSMACDNetwork::GetNextPacketIndex(double startTime) {
     for (uint i=0; i < nodes.size(); i++) {
         double currPacketTime = nodes[i].GetNextEventTime();
         if (nodes[i].GetQueueSize() > 0 
-            && nodes[i].GetNextEventTime() < packetTime
-            && nodes[i].GetNextEventTime() > startTime) 
+            && currPacketTime > startTime
+            && currPacketTime < packetTime) 
         {
             index = i;
             packetTime = currPacketTime;
@@ -44,22 +44,22 @@ int CSMACDNetwork::GetNextPacketIndex(double startTime) {
 }
 
 CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
-    double totalTransmissions = 0;
+    double totalPackets = 0;
     double totalCollisions = 0;
     double totalSucesses = 0;
 
     for (NodeEventQueue node: nodes) {
         NodeEventQueue::NodeResult nodeResult = node.GetPerformanceStats();
 
-        totalTransmissions += nodeResult.transmissions;
+        totalPackets += nodeResult.packets;
         totalCollisions += nodeResult.collisions;
         totalSucesses += nodeResult.successes;
     }
     std::cout << "Transmissions, Successes, Collisions" << endl;
-    std::cout << totalTransmissions << "," << totalSucesses << "," << totalCollisions << std::endl;
+    std::cout << totalPackets << "," << totalSucesses << "," << totalCollisions << std::endl;
     
     double throughput = (totalSucesses * L) / simulationTime;
-    double efficiency = totalSucesses / totalTransmissions;
+    double efficiency = totalSucesses / totalPackets;
 
     return {throughput, efficiency};
 }

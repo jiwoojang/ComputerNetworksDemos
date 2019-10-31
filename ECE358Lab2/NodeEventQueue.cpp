@@ -15,8 +15,8 @@ NodeEventQueue::NodeEventQueue(double newLambda, double newR)
     collisionCounter = 0;
     busyBackOffCounter = 0;
     totalCollisions = 0;
-    successfulTransmissions = 0; 
-    totalTransmissions = 0;
+    successfulTransmissions = 0;
+    numPackets = 0;
 }
 
 NodeEventQueue::~NodeEventQueue() {
@@ -44,6 +44,7 @@ void NodeEventQueue::InitializeQueue(double simulationTime, double newPropDelay,
         // Create and push an arrival event
         Event arrivalEvent(Event::EventType::Arrival, time);
         eventList.push_back(arrivalEvent);
+        numPackets++;
     }
 
     // Sort all events by time stamp
@@ -106,8 +107,9 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
         // Drop the packet
         PopEvent();
 
-        // Reset counter
+        // Reset counters
         ResetCollisionCounter();
+        ResetBusyBackOffCounter();
         return;
     }
 
@@ -150,7 +152,7 @@ void NodeEventQueue::ApplyBusyExponentialBackOff()
         // Drop the packet
         PopEvent();
 
-        busyBackOffCounter = 0;
+        ResetCollisionCounter();
         ResetBusyBackOffCounter();
         return;
     }
@@ -175,15 +177,14 @@ void NodeEventQueue::TransmitPacketSuccessfully()
 {
     if (!eventList.empty())
     {
-        ++totalTransmissions;
-
         // Success!
         ++successfulTransmissions;
 
-        ResetCollisionCounter();
-
         // Transmit the packet
         PopEvent();
+
+        ResetCollisionCounter();
+        ResetBusyBackOffCounter();
     }
 }
 
@@ -191,8 +192,6 @@ void NodeEventQueue::TransmitPacketWithCollision()
 {
     if (!eventList.empty())
     {
-        ++totalTransmissions;
-
         // Record the collision
         ++totalCollisions;
     }
@@ -200,6 +199,6 @@ void NodeEventQueue::TransmitPacketWithCollision()
 
 NodeEventQueue::NodeResult NodeEventQueue::GetPerformanceStats() {
     std::cout << "Transmissions, Successes, Collisions" << endl;
-    std::cout << totalTransmissions << "," << successfulTransmissions << "," << totalCollisions << std::endl;
-    return {totalTransmissions, successfulTransmissions, totalCollisions};
+    std::cout << numPackets << "," << successfulTransmissions << "," << totalCollisions << std::endl;
+    return {numPackets, successfulTransmissions, totalCollisions};
 }

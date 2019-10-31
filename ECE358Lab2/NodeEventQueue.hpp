@@ -12,7 +12,7 @@ public:
     ~NodeEventQueue();
 
     struct NodeResult {
-        int transmissions;
+        int packets;
         int successes;
         int collisions;
     };
@@ -50,7 +50,7 @@ private:
 
     int totalCollisions;
     int successfulTransmissions; 
-    int totalTransmissions;
+    int numPackets;
 
     list<Event> eventList;
 };
