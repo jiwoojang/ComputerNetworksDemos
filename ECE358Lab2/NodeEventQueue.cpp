@@ -202,7 +202,5 @@ void NodeEventQueue::TransmitPacketWithCollision()
 }
 
 NodeEventQueue::NodeResult NodeEventQueue::GetPerformanceStats() {
-    std::cout << "Transmissions, Successes, Collisions" << endl;
-    std::cout << numPackets << "," << successfulTransmissions << "," << totalCollisions << std::endl;
     return {numPackets, successfulTransmissions, totalCollisions};
 }
