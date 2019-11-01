@@ -15,6 +15,7 @@ public:
         int packets;
         int successes;
         int collisions;
+        int dropped;
     };
     
     void InitializeQueue(double simulationTime, double newPropDelay, double newTransDelay);
@@ -23,6 +24,8 @@ public:
 
     double GetNextEventTime();
     int GetQueueSize();
+
+    void DiscardPacket();
     void PopEvent();
 
     void ResetBusyBackOffCounter();
@@ -51,6 +54,7 @@ private:
     int totalCollisions;
     int successfulTransmissions; 
     int numPackets;
+    int numDropped;
 
     list<Event> eventList;
 };

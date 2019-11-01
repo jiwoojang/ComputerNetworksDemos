@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#define TOL 1e-9
+
 enum class PersistenceType
 {
     Persistent,
@@ -40,7 +42,7 @@ private:
     // Constant values given in lab manual that hold accross all questions
     const double R = 1e6; // 1 Mbps
     const int L = 1500; // 1500 bits/packet
-    const double D = 10.0; // 10 m between nodes
+    const double D = 10000.0; // 10 m between nodes
     const double S = 2e8; // 2/3 of speed of light in m/s
 
     std::vector<NodeEventQueue> nodes;
@@ -54,4 +56,6 @@ private:
 
     Packet currentPacket;
     Packet nextPacket;
+
+    double prevTransTime;
 };

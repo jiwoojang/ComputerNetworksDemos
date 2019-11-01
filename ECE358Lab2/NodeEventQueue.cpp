@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <iomanip>
 
 #include "NodeEventQueue.hpp"
 #include "Event.hpp"
@@ -17,6 +18,7 @@ NodeEventQueue::NodeEventQueue(double newLambda, double newR)
     totalCollisions = 0;
     successfulTransmissions = 0;
     numPackets = 0;
+    numDropped = 0;
 }
 
 NodeEventQueue::~NodeEventQueue() {
@@ -93,9 +95,17 @@ bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
 {
     // The next packet up for transmission
     double nextPacketTime = eventList.front().GetProcessTime();
-
     double signalArivalTime = transTime + (distance*propDelay);
-    return (nextPacketTime > signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay) );
+    
+    return (nextPacketTime > signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay));
+}
+
+void NodeEventQueue::DiscardPacket() {
+        PopEvent();
+
+        // Reset counters
+        ResetCollisionCounter();
+        ResetBusyBackOffCounter();
 }
 
 // transtime is collision time is using greedy method
@@ -105,17 +115,13 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
     
     if (collisionCounter > 10)
     {
-        // Drop the packet
-        PopEvent();
-
-        // Reset counters
-        ResetCollisionCounter();
-        ResetBusyBackOffCounter();
+        DiscardPacket();
+        ++numDropped;
         return;
     }
 
-    double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f);
-    double waitTime = (randomMultiplier * 512.0f/R) + transTime + transDelay; //J: don't think we use transdelay here?
+    double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f));
+    double waitTime = (randomMultiplier * 512.0f/R) + transTime; // + transDelay; //J: don't think we use transdelay here?
 
     for (Event& packetArrival : eventList)
     {
@@ -132,10 +138,10 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 
 void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
-    double waitTime = (transTime + (distance*propDelay)) + transDelay;
+    double waitTime = (transTime + (distance*propDelay));
 
     for (Event& packetArrival : eventList)
-    {
+    {   
         // Events are stored in order
         if (packetArrival.GetProcessTime() < waitTime)
         {
@@ -153,23 +159,26 @@ void NodeEventQueue::ApplyBusyExponentialBackOff()
 
     if (busyBackOffCounter > 10)
     {
-        // Drop the packet
-        PopEvent();
-
-        ResetCollisionCounter();
-        ResetBusyBackOffCounter();
+        DiscardPacket();
+        ++numDropped;
         return;
     }
 
     double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
     double waitTime = (randomMultiplier * 512.0f/R) + eventList.front().GetProcessTime();
 
+    // 2nd and latest packets can at ealiest be sent Ttrans after 1st
+    bool setFirst = false;
     for (Event& packetArrival : eventList)
     {
-        if (packetArrival.GetProcessTime() < waitTime)
+        if (packetArrival.GetProcessTime() < waitTime && !setFirst)
         {
             packetArrival.SetProcessTime(waitTime);
+            setFirst = true;
         }
+        else if (packetArrival.GetProcessTime() < waitTime + transDelay) {
+            packetArrival.SetProcessTime(waitTime + transDelay);
+        } 
         else 
         {
             break;
@@ -184,11 +193,22 @@ void NodeEventQueue::TransmitPacketSuccessfully()
         // Success!
         ++successfulTransmissions;
 
-        // Transmit the packet
-        PopEvent();
+        double transTime = eventList.front().GetProcessTime();
+        //std::cout << std::setprecision(10) << eventList.front().GetProcessTime() << "," << collisionCounter << "," << GetQueueSize() <<  std::endl;
+        DiscardPacket();
 
-        ResetCollisionCounter();
-        ResetBusyBackOffCounter();
+        // update other packets on node to not send until current node is done
+        for (Event& packetArrival : eventList) 
+        {
+            if (packetArrival.GetProcessTime() < transTime + transDelay)
+            {
+                packetArrival.SetProcessTime(transTime + transDelay);
+            }
+            else 
+            {
+                break;
+            }
+        }
     }
 }
 
@@ -202,5 +222,5 @@ void NodeEventQueue::TransmitPacketWithCollision()
 }
 
 NodeEventQueue::NodeResult NodeEventQueue::GetPerformanceStats() {
-    return {numPackets, successfulTransmissions, totalCollisions};
+    return {numPackets, successfulTransmissions, totalCollisions, numDropped};
 }

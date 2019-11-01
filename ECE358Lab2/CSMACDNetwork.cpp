@@ -2,6 +2,7 @@
 
 #include <cfloat>
 #include <iostream>
+#include <iomanip>
 
 CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA) {
     persistenceType = newPersistenceType;
@@ -12,6 +13,7 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
+    prevTransTime = -1;
 }
 
 CSMACDNetwork::~CSMACDNetwork() {}
@@ -47,6 +49,7 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
     double totalPackets = 0;
     double totalCollisions = 0;
     double totalSucesses = 0;
+    double totalDropped = 0;
 
     for (NodeEventQueue node: nodes) {
         NodeEventQueue::NodeResult nodeResult = node.GetPerformanceStats();
@@ -54,12 +57,13 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
         totalPackets += nodeResult.packets;
         totalCollisions += nodeResult.collisions;
         totalSucesses += nodeResult.successes;
+        totalDropped += nodeResult.dropped;
     }
-    std::cout << "Transmissions, Successes, Collisions" << endl;
-    std::cout << totalPackets << "," << totalSucesses << "," << totalCollisions << std::endl;
+    std::cout << "Transmissions, Successes, Collisions, Dropped" << endl;
+    std::cout << totalPackets << "," << totalSucesses << "," << totalCollisions << "," << totalDropped << std::endl;
     
     double throughput = (totalSucesses * L) / simulationTime;
-    double efficiency = totalSucesses / (totalSucesses + totalCollisions);
+    double efficiency = totalSucesses / totalPackets;
 
     return {throughput, efficiency};
 }
@@ -73,14 +77,14 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         if (index < 0) break;
 
         double packetTransTime = nodes[index].GetNextEventTime();
-        
+
         // If a node is ready to transmit, then reset its busy backoff counter if being used
         if (persistenceType == PersistenceType::NonPersistent)
         {
             nodes[index].ResetBusyBackOffCounter();
         }
 
-        // Find the 1st collision that will occur
+        // Find the 1st collision that will occur (1st that transmitter sees)
         double lowestCollisionTime = DBL_MAX;
         int collisionIndex = -1;
 
@@ -98,39 +102,52 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
                     collisionIndex = i;
                 };
             }
-            else {
-                // Even if there is a collision going on, other nodes will still see the bus as busy
-                if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
-                    switch(persistenceType)
+        }
+        
+        // Process effects of collision or not
+        if (collisionIndex > 0) 
+        {
+            nodes[index].TransmitPacketWithCollision();
+            
+            // If a collision occured the transmitting node will see it at the time of the first collision plus propogation back
+            nodes[index].ApplyExponentialBackOff(packetTransTime + 2*(abs(index-collisionIndex) * propDelay));
+        }
+        else
+        { 
+            if (abs(nodes[index].GetNextEventTime()-prevTransTime) < (transDelay-TOL)) {
+                //std::cout << std::setprecision(30) << nodes[index].GetNextEventTime() << "," << prevTransTime << "," << std::setprecision(10) << double(nodes[index].GetNextEventTime()-prevTransTime) << std::endl;
+            }
+            prevTransTime = nodes[index].GetNextEventTime();
+            nodes[index].TransmitPacketSuccessfully();
+        }  
+
+
+        // Backoff on all nodes *after* packet is sent or collision is processed
+        for (int i=0; i<N; i++) 
+        {
+            if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
+                switch(persistenceType)
+                {
+                    case PersistenceType::Persistent:
                     {
-                        case PersistenceType::Persistent:
-                        {
-                            nodes[i].ApplyBusyWait(packetTransTime, abs(index-i));
-                            break;
+                        // If a collision occurs wait after node sees collision to transmit
+                        if (collisionIndex > 0) {
+                            nodes[i].ApplyBusyWait(nodes[collisionIndex].GetNextEventTime(), abs(collisionIndex-i));
                         }
-                        case PersistenceType::NonPersistent:
-                        {
-                            nodes[i].ApplyBusyExponentialBackOff();
-                            break;
+                        else {
+                            // Wait until node sees end of current packet
+                            nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(index-i));
                         }
-                        default:
-                            break;
+                        break;
+                    }
+                    case PersistenceType::NonPersistent:
+                    {
+                        nodes[i].ApplyBusyExponentialBackOff();
+                        break;
                     }
                 }
             }
         }
-
-        // Process effects of collision
-        if (collisionIndex > 0) {
-            nodes[index].TransmitPacketWithCollision();
-            
-            // If a collision occured the transmitting node will see it at the time of the first collision
-            nodes[index].ApplyExponentialBackOff(packetTransTime + abs(index-collisionIndex) * propDelay);
-        }
-        else
-        {
-            nodes[index].TransmitPacketSuccessfully();
-        }    
     }
 
     return CalculatePerformance();
