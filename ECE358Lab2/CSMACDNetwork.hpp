@@ -58,4 +58,6 @@ private:
     Packet nextPacket;
 
     double prevTransTime;
+    bool wasPrevCollision;
+    int prevNode;
 };

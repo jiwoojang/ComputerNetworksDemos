@@ -2,27 +2,12 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "preLaunchTask": "Build with Makefile",
-        "name": "C++ Launch",
-        "type": "cppdbg",
+        "type": "gdb",
         "request": "launch",
-        "program": "${workspaceFolder}/build/QueueSimulator.out",
-        "args": [],
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "linux": {
-          "externalConsole": false,
-          "MIMode": "gdb"
-        },
-        "osx": {
-          "externalConsole": true,
-          "MIMode": "lldb"
-        },
-        "logging": {
-          "trace": false,
-          "traceResponse": false,
-          "engineLogging": false
-        }
+        "name": "Debug",
+        "target": "build/QueueSimulator.out",
+        "cwd": "${workspaceRoot}",
+        "valuesFormatting": "parseText"
       }
     ]
   }

@@ -3,7 +3,7 @@
 RandomNumberGenerator::RandomNumberGenerator()
 {
     // Seed the generator
-    generator.seed(rd());
+    generator.seed(1);
 
     // Initialize the uniform distribution
     dis = std::uniform_real_distribution<double>(0, 1.0f);

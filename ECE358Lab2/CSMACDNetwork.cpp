@@ -13,7 +13,10 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
+    
     prevTransTime = -1;
+    wasPrevCollision = false;
+    prevNode = -1;
 }
 
 CSMACDNetwork::~CSMACDNetwork() {}
@@ -111,14 +114,18 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             
             // If a collision occured the transmitting node will see it at the time of the first collision plus propogation back
             nodes[index].ApplyExponentialBackOff(packetTransTime + 2*(abs(index-collisionIndex) * propDelay));
+            wasPrevCollision = true;
         }
         else
         { 
             if (abs(nodes[index].GetNextEventTime()-prevTransTime) < (transDelay-TOL)) {
                 //std::cout << std::setprecision(30) << nodes[index].GetNextEventTime() << "," << prevTransTime << "," << std::setprecision(10) << double(nodes[index].GetNextEventTime()-prevTransTime) << std::endl;
             }
-            prevTransTime = nodes[index].GetNextEventTime();
             nodes[index].TransmitPacketSuccessfully();
+
+            prevTransTime = nodes[index].GetNextEventTime();
+            wasPrevCollision = false;
+            prevNode = index;
         }  
 
 
