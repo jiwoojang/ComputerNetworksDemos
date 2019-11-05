@@ -106,7 +106,7 @@ bool NodeEventQueue::WillCollideWithTransmission(double transTime, int distance)
     double nextPacketTime = eventList.front().GetProcessTime();
 
     // Check for collision
-    return (nextPacketTime > transTime) && (nextPacketTime < (transTime + (distance*propDelay)));
+    return (nextPacketTime < (transTime + (distance*propDelay)));
 }
 
 bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)

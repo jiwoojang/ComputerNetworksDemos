@@ -111,7 +111,7 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
 
             // More than 1 collision can occur on one transmission
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
-                
+
                 // Collision occurs right away, because nodes detect them right away
                 nodes[i].TransmitPacketWithCollision();
                 nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
@@ -127,9 +127,9 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             nodes[index].ApplyExponentialBackOff(packetTransTime + transDelay);
         }
         else
-        { 
+        {
             nodes[index].TransmitPacketSuccessfully();
-        }  
+        }
 
         // Backoff on all nodes *after* packet is sent or collision is processed
         for (int i=0; i<N; i++) 
