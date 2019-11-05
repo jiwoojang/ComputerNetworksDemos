@@ -77,8 +77,6 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
         totalSucesses += nodeResult.successes;
         totalDropped += nodeResult.dropped;
     }
-    std::cout << "Total Packets, Successes, Collisions, Dropped" << endl;
-    std::cout << totalPackets << "," << totalSucesses << "," << totalCollisions << "," << totalDropped << std::endl;
     
     double throughput = (totalSucesses * L) / simulationTime;
     double efficiency = totalSucesses / (totalSucesses+totalCollisions);
@@ -113,10 +111,9 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
 
             // More than 1 collision can occur on one transmission
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
-
+                
+                // Collision occurs right away, because nodes detect them right away
                 nodes[i].TransmitPacketWithCollision();
-                // Collision occurs when signal from transmitted reaches node
-                double collisionTime = packetTransTime + abs(index-i)*propDelay;
                 nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
                 collision = true;
             }

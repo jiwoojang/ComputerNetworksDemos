@@ -115,6 +115,8 @@ bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
     double nextPacketTime = eventList.front().GetProcessTime();
     double signalArivalTime = transTime + (distance*propDelay);
     
+    // We consider a packet that arrives EXACTLY at the time the bus is free
+    // as a packet that will see the bus busy, not as a collision
     return (nextPacketTime >= signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay));
 }
 
@@ -126,7 +128,7 @@ void NodeEventQueue::DiscardPacket() {
         ResetBusyBackOffCounter();
 }
 
-// transtime is collision time is using greedy method
+// transTime is collision time is using greedy method
 void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 {
     ++collisionCounter;
@@ -138,7 +140,7 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
         return;
     }
     double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f));
-    double waitTime = (randomMultiplier * 512.0f/R) + transTime; // + transDelay; //J: don't think we use transdelay here?
+    double waitTime = (randomMultiplier * 512.0f/R) + transTime;
 
     for (Event& packetArrival : eventList)
     {
@@ -172,7 +174,6 @@ void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 
 void NodeEventQueue::ApplyBusyExponentialBackOff(double packetTime, int distance)
 {
-
     double waitTime = eventList.front().GetProcessTime();
 
     // Apply exponential backoff until node will see bus free
