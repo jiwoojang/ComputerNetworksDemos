@@ -55,8 +55,4 @@ private:
 
     Packet currentPacket;
     Packet nextPacket;
-
-    double prevTransTime;
-    bool wasPrevCollision;
-    int prevNode;
 };

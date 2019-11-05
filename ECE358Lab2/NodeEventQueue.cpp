@@ -65,7 +65,6 @@ void NodeEventQueue::InitializeQueue(double newPropDelay, double newTransDelay, 
     R = 1e6;
 
     for (double t: arrivals) {
-        //std::cout << t << std::endl;
         Event arrivalEvent(Event::EventType::Arrival, t);
         eventList.push_back(arrivalEvent);
         numPackets++;
@@ -138,15 +137,10 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
         ++numDropped;
         return;
     }
-
-    //std::cout << "Collision at " << std::setprecision(10) << eventList.front().GetProcessTime() << std::endl; ;
-
     double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f));
     double waitTime = (randomMultiplier * 512.0f/R) + transTime; // + transDelay; //J: don't think we use transdelay here?
 
-    //std::cout << "Backing off to " << waitTime << std::endl;
-
-     for (Event& packetArrival : eventList)
+    for (Event& packetArrival : eventList)
     {
         if (packetArrival.GetProcessTime() < waitTime)
         {
@@ -162,8 +156,6 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
     double waitTime = (transTime + (distance*propDelay));
-
-    //std::cout << "Busy waiting all packets in this node to " << waitTime << endl; 
 
     for (Event& packetArrival : eventList)
     {   
@@ -219,7 +211,6 @@ void NodeEventQueue::TransmitPacketSuccessfully()
         ++successfulTransmissions;
 
         double transTime = eventList.front().GetProcessTime();
-        //std::cout << "Sent packet at " << std::setprecision(10) << eventList.front().GetProcessTime() << "," << collisionCounter << "," << GetQueueSize() <<  std::endl;
         DiscardPacket();
 
         // update other packets on node to not send until current node is done

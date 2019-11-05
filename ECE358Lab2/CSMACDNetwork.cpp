@@ -13,10 +13,6 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
-    
-    prevTransTime = -1;
-    wasPrevCollision = false;
-    prevNode = -1;
 }
 
 CSMACDNetwork::~CSMACDNetwork() {}
@@ -28,10 +24,6 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
-    
-    prevTransTime = -1;
-    wasPrevCollision = false;
-    prevNode = -1;
 
     for (auto nodeArrivals: arrivals) {
         NodeEventQueue newNode;
@@ -39,8 +31,6 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::
         nodes.push_back(newNode);
     }
 }
-
-//CSMACDNetwork::~CSMACDNetwork() {}
 
 void CSMACDNetwork::InitializeNetwork() {
     for (int i=0; i<N; i++) {
@@ -103,8 +93,6 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         if (index < 0) break;
 
         packetTransTime = nodes[index].GetNextEventTime();
-        //std::cout << "Next event time " << packetTransTime << std::endl;
-
 
         if (packetTransTime > simulationTime) break;
 
@@ -129,8 +117,6 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
                 double collisionTime = packetTransTime + abs(index-i)*propDelay;
                 nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
 
-                //std::cout << std::setprecision(10) << "Node " << i << " packets backed off to: " << nodes[i].GetNextEventTime() << endl;
-
                 if (nodes[i].GetNextEventTime() < lowestCollisionTime && nodes[i].GetNextEventTime() > 0) {
                     lowestCollisionTime = nodes[i].GetNextEventTime();
                     collisionIndex = i;
@@ -141,42 +127,20 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         // Process effects of collision or not
         if (collisionIndex >= 0)
         {
-            //std::cout << "Collision" << std::endl;
             nodes[index].TransmitPacketWithCollision();
-            
+
             // If a collision occured the transmitting node will see it at the time of the first collision plus propogation back
             nodes[index].ApplyExponentialBackOff(packetTransTime + transDelay);
-            // 2*(abs(index-collisionIndex) * propDelay)
-
-            //std::cout << std::setprecision(10) << "Node " << index << " packets backed off to: " << nodes[index].GetNextEventTime() << endl;
-
-            wasPrevCollision = true;
         }
         else
         { 
-            double tempPrevTransTime = packetTransTime;
-
-            if (abs(nodes[index].GetNextEventTime()-prevTransTime) < (transDelay-TOL)) {
-                //std::cout << "ERROR IN TIMING CONSTRAINT" << endl;
-                //std::cout << "Current Trans Time: " << std::setprecision(10) << nodes[index].GetNextEventTime() << ", Prev Trans Time: " << prevTransTime << ", " << std::setprecision(10) << double(nodes[index].GetNextEventTime()-prevTransTime) << std::endl;
-                //std::cout << "Current Trans Node: " << index << ", Previous Trans Node: " << prevNode << endl;
-            }
-
-            //std::cout << std::setprecision(10) << "Successfully transmitting Node: " << index << ",  Transtime: " << packetTransTime << endl;
             nodes[index].TransmitPacketSuccessfully();
-
-            prevTransTime = tempPrevTransTime;
-            wasPrevCollision = false;
-            prevNode = index;
         }  
-
 
         // Backoff on all nodes *after* packet is sent or collision is processed
         for (int i=0; i<N; i++) 
         {   
-            //std::cout << packetTransTime << std::endl;
             if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
-                //std::cout << "Node " << i << " detected bus busy" << endl; 
                 switch(persistenceType)
                 {
                     case PersistenceType::Persistent:
