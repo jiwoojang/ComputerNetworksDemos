@@ -187,7 +187,7 @@ void NodeEventQueue::ApplyBusyExponentialBackOff(double packetTime, int distance
             return;
         }
 
-        double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
+        double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f));
         waitTime += (randomMultiplier * 512.0f/R);
     }
 
