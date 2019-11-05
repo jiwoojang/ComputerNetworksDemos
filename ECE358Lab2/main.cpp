@@ -3,30 +3,54 @@
 #include "CSMACDNetwork.hpp"
 using namespace std;
 
-
-// Function to run simulation with manually set packet arrival times for debugging purposes
-void runSimpleSim() {
-    cout << "Running Main" << endl;
-    CSMACDNetwork simulation(PersistenceType::Persistent,
-    {
-        {0.000001, 0.00002},
-        {0.000001001},
-    });
-
-    CSMACDNetwork::SimulationResult result = simulation.RunSimulation();
-    std::cout << result.throughput << ", " << result.efficiency << std::endl;
-}
-
 int main() {
     // See CSMACDNetwork.hpp for network simulation constant parameters
+    std::cout << "Persistent,,,NonPersistent" << endl;
+    std::cout << "Nodes,Throughput,Efficiency,Nodes,Throughput,Efficiency" << endl;
+
     for (int i = 20; i <= 100; i+=20)
     {
-        CSMACDNetwork simulation(PersistenceType::NonPersistent, i, 20);
-        //CSMACDNetwork simulation(PersistenceType::NonPersistent, i, 7);
-        simulation.InitializeNetwork();
+        CSMACDNetwork presistentSimulation(PersistenceType::Persistent, i, 7);
+        presistentSimulation.InitializeNetwork();
         
-        CSMACDNetwork::SimulationResult result = simulation.RunSimulation();
-        std::cout << i << " Nodes" << endl;
-        std::cout << result.throughput << ", " << result.efficiency << std::endl;
+        CSMACDNetwork::SimulationResult result = presistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << ",";
+
+        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 7);
+        nonPersistentSimulation.InitializeNetwork();
+        
+        result = nonPersistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << endl;
     }
+
+    for (int i = 20; i <= 100; i+=20)
+    {
+        CSMACDNetwork presistentSimulation(PersistenceType::Persistent, i, 10);
+        presistentSimulation.InitializeNetwork();
+        
+        CSMACDNetwork::SimulationResult result = presistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << ",";
+
+        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 7);
+        nonPersistentSimulation.InitializeNetwork();
+        
+        result = nonPersistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << endl;
+    }
+
+    for (int i = 20; i <= 100; i+=20)
+    {
+        CSMACDNetwork presistentSimulation(PersistenceType::Persistent, i, 20);
+        presistentSimulation.InitializeNetwork();
+        
+        CSMACDNetwork::SimulationResult result = presistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << ",";
+
+        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 7);
+        nonPersistentSimulation.InitializeNetwork();
+        
+        result = nonPersistentSimulation.RunSimulation();
+        std::cout << i << "," << result.throughput << "," << result.efficiency << endl;
+    }
+
 }
