@@ -97,7 +97,7 @@ bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
     double nextPacketTime = eventList.front().GetProcessTime();
     double signalArivalTime = transTime + (distance*propDelay);
     
-    return (nextPacketTime > signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay));
+    return (nextPacketTime >= signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay));
 }
 
 void NodeEventQueue::DiscardPacket() {
@@ -139,6 +139,8 @@ void NodeEventQueue::ApplyExponentialBackOff(double transTime)
 void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
 {
     double waitTime = (transTime + (distance*propDelay));
+
+    //std::cout << "Busy waiting all packets in this node to " << waitTime << endl; 
 
     for (Event& packetArrival : eventList)
     {   
@@ -194,7 +196,7 @@ void NodeEventQueue::TransmitPacketSuccessfully()
         ++successfulTransmissions;
 
         double transTime = eventList.front().GetProcessTime();
-        //std::cout << std::setprecision(10) << eventList.front().GetProcessTime() << "," << collisionCounter << "," << GetQueueSize() <<  std::endl;
+        //std::cout << std::setprecision(10) << "Transmission Time: " << transTime << ", Collision Counter: " << collisionCounter << ", Size: " << GetQueueSize() <<  std::endl;
         DiscardPacket();
 
         // update other packets on node to not send until current node is done
