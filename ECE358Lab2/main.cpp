@@ -10,7 +10,7 @@ int main() {
     // See CSMACDNetwork.hpp for network simulation constant parameters
     for (int i = 20; i <= 100; i+=20)
     {
-        CSMACDNetwork simulation(PersistenceType::Persistent, i, 20);
+        CSMACDNetwork simulation(PersistenceType::Persistent, i, 5);
         //CSMACDNetwork simulation(PersistenceType::NonPersistent, i, 7);
         simulation.InitializeNetwork();
         

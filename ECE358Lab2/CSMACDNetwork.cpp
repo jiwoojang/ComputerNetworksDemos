@@ -62,11 +62,11 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
         totalSucesses += nodeResult.successes;
         totalDropped += nodeResult.dropped;
     }
-    std::cout << "Transmissions, Successes, Collisions, Dropped" << endl;
+    std::cout << "Total Packets, Successes, Collisions, Dropped" << endl;
     std::cout << totalPackets << "," << totalSucesses << "," << totalCollisions << "," << totalDropped << std::endl;
     
     double throughput = (totalSucesses * L) / simulationTime;
-    double efficiency = totalSucesses / totalPackets;
+    double efficiency = totalSucesses / (totalSucesses+totalCollisions);
 
     return {throughput, efficiency};
 }
