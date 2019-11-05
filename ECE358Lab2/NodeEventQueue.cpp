@@ -170,31 +170,32 @@ void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
     }
 }
 
-void NodeEventQueue::ApplyBusyExponentialBackOff()
+void NodeEventQueue::ApplyBusyExponentialBackOff(double packetTime, int distance)
 {
-    ++busyBackOffCounter;
 
-    if (busyBackOffCounter > 10)
-    {
-        DiscardPacket();
-        ++numDropped;
-        return;
+    double waitTime = eventList.front().GetProcessTime();
+
+    // Apply exponential backoff until node will see bus free
+    while (waitTime < (packetTime + distance*propDelay)) {
+        ++busyBackOffCounter;
+
+        if (busyBackOffCounter > 10)
+        {
+            DiscardPacket();
+            ++numDropped;
+            return;
+        }
+
+        double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
+        waitTime += (randomMultiplier * 512.0f/R);
     }
 
-    double randomMultiplier = numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f);
-    double waitTime = (randomMultiplier * 512.0f/R) + eventList.front().GetProcessTime();
-
-    // 2nd and latest packets can at ealiest be sent Ttrans after 1st
-    bool setFirst = false;
+    // Backoff for all relevant nodes in the queue
     for (Event& packetArrival : eventList)
     {
-        if (packetArrival.GetProcessTime() < waitTime && !setFirst)
+        if (packetArrival.GetProcessTime() < waitTime) 
         {
             packetArrival.SetProcessTime(waitTime);
-            setFirst = true;
-        }
-        else if (packetArrival.GetProcessTime() < waitTime + transDelay) {
-            packetArrival.SetProcessTime(waitTime + transDelay);
         } 
         else 
         {

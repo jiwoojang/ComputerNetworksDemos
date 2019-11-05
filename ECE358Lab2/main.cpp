@@ -4,6 +4,7 @@
 using namespace std;
 
 
+// Function to run simulation with manually set packet arrival times for debugging purposes
 void runSimpleSim() {
     cout << "Running Main" << endl;
     CSMACDNetwork simulation(PersistenceType::Persistent,

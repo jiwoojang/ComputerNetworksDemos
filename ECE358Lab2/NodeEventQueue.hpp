@@ -35,7 +35,7 @@ public:
     
     void ApplyExponentialBackOff(double transTime);
     void ApplyBusyWait(double transTime, int distance);
-    void ApplyBusyExponentialBackOff();
+    void ApplyBusyExponentialBackOff(double transTime, int distance);
 
     void TransmitPacketSuccessfully();
     void TransmitPacketWithCollision();

@@ -5,26 +5,26 @@
 #include <iomanip>
 #include <list>
 
+
 CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA) {
     persistenceType = newPersistenceType;
     N = newN;
     A = newA;
 
+    // All packets have same length here, and distance is the same between all nodes
     propDelay = D/S;
-    // All packets have same length here
     transDelay = L/R;
 }
 
-CSMACDNetwork::~CSMACDNetwork() {}
-
+// Constructor that takes a manually given list of lists of arrival times
 CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::list<double>> arrivals) {
     persistenceType = newPersistenceType;
     N = arrivals.size();
 
     propDelay = D/S;
-    // All packets have same length here
     transDelay = L/R;
 
+    // Create new node for each list of arrivals and initialize node's arrivals to that arrival list
     for (auto nodeArrivals: arrivals) {
         NodeEventQueue newNode;
         newNode.InitializeQueue(propDelay, transDelay, nodeArrivals);
@@ -32,6 +32,9 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::
     }
 }
 
+CSMACDNetwork::~CSMACDNetwork() {}
+
+// For given number of nodes and arrival characteristics, create nodes and generate node arrival times
 void CSMACDNetwork::InitializeNetwork() {
     for (int i=0; i<N; i++) {
         NodeEventQueue newNode(A, R);
@@ -48,8 +51,7 @@ int CSMACDNetwork::GetNextPacketIndex(double startTime) {
     for (uint i=0; i < nodes.size(); i++) {
         // If no data currPacketTime will be negative
         double currPacketTime = nodes[i].GetNextEventTime();
-        if (currPacketTime > startTime
-            && currPacketTime < packetTime) 
+        if (currPacketTime > startTime && currPacketTime < packetTime) 
         {
             index = i;
             packetTime = currPacketTime;
@@ -59,13 +61,15 @@ int CSMACDNetwork::GetNextPacketIndex(double startTime) {
     return index;
 }
 
+// Sum performance metrics from each node and print total network performance stats
 CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
     double totalPackets = 0;
     double totalCollisions = 0;
     double totalSucesses = 0;
     double totalDropped = 0;
 
-    for (NodeEventQueue node: nodes) {
+    for (NodeEventQueue node: nodes) 
+    {
         NodeEventQueue::NodeResult nodeResult = node.GetPerformanceStats();
 
         totalPackets += nodeResult.packets;
@@ -82,19 +86,19 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
     return {throughput, efficiency};
 }
 
+// Main function to run the simulation after initialization
 CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
+    // Index of node transmitting current packet
     int index=0;
-
     double packetTransTime;
 
     while (true) {
         // Scan for next packet
         index = GetNextPacketIndex();
-        if (index < 0) break;
+        if (index < 0) break; // no packet found, all packets have been processed
 
         packetTransTime = nodes[index].GetNextEventTime();
-
-        if (packetTransTime > simulationTime) break;
+        if (packetTransTime > simulationTime) break; // cutoff at the end of simulation time
 
         // If a node is ready to transmit, then reset its busy backoff counter if being used
         if (persistenceType == PersistenceType::NonPersistent)
@@ -102,10 +106,8 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
             nodes[index].ResetBusyBackOffCounter();
         }
 
-        // Find the 1st collision that will occur (1st that transmitter sees)
-        double lowestCollisionTime = DBL_MAX;
-        int collisionIndex = -1;
-
+        // Check for collisions
+        bool collision = false;
         for (int i=0; i<N; i++) {
             if (i==index) continue;
 
@@ -116,20 +118,15 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
                 // Collision occurs when signal from transmitted reaches node
                 double collisionTime = packetTransTime + abs(index-i)*propDelay;
                 nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
-
-                if (nodes[i].GetNextEventTime() < lowestCollisionTime && nodes[i].GetNextEventTime() > 0) {
-                    lowestCollisionTime = nodes[i].GetNextEventTime();
-                    collisionIndex = i;
-                };
+                collision = true;
             }
         }
         
         // Process effects of collision or not
-        if (collisionIndex >= 0)
+        if (collision)
         {
+            // If a collision occured the transmitting node sees it immediately as per lab manual
             nodes[index].TransmitPacketWithCollision();
-
-            // If a collision occured the transmitting node will see it at the time of the first collision plus propogation back
             nodes[index].ApplyExponentialBackOff(packetTransTime + transDelay);
         }
         else
@@ -140,17 +137,18 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         // Backoff on all nodes *after* packet is sent or collision is processed
         for (int i=0; i<N; i++) 
         {   
-            if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
+            if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) 
+            {
                 switch(persistenceType)
                 {
                     case PersistenceType::Persistent:
                     {
-                        nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(collisionIndex-i));
+                        nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(index-i));
                         break;
                     }
                     case PersistenceType::NonPersistent:
                     {
-                        nodes[i].ApplyBusyExponentialBackOff();
+                        nodes[i].ApplyBusyExponentialBackOff(packetTransTime+transDelay, abs(index-i));
                         break;
                     }
                 }

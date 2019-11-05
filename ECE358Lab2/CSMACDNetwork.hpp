@@ -26,6 +26,7 @@ public:
     };
 
     CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA);
+    // Constructor that takes manually set list of arrival events
     CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::list<double>> arrivals);
     ~CSMACDNetwork();
 
@@ -50,6 +51,7 @@ private:
 
     std::vector<NodeEventQueue> nodes;
 
+    // Calculated values based on constants
     double propDelay;
     double transDelay;
 
