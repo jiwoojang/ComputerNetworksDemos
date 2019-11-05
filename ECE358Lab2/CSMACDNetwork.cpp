@@ -3,13 +3,13 @@
 #include <cfloat>
 #include <iostream>
 #include <iomanip>
+#include <list>
 
 CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA) {
     persistenceType = newPersistenceType;
     N = newN;
     A = newA;
 
-    simulationTime = 1000; // TODO move this to main.cpp and tune
     propDelay = D/S;
     // All packets have same length here
     transDelay = L/R;
@@ -20,6 +20,27 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
 }
 
 CSMACDNetwork::~CSMACDNetwork() {}
+
+CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::list<double>> arrivals) {
+    persistenceType = newPersistenceType;
+    N = arrivals.size();
+
+    propDelay = D/S;
+    // All packets have same length here
+    transDelay = L/R;
+    
+    prevTransTime = -1;
+    wasPrevCollision = false;
+    prevNode = -1;
+
+    for (auto nodeArrivals: arrivals) {
+        NodeEventQueue newNode;
+        newNode.InitializeQueue(propDelay, transDelay, nodeArrivals);
+        nodes.push_back(newNode);
+    }
+}
+
+//CSMACDNetwork::~CSMACDNetwork() {}
 
 void CSMACDNetwork::InitializeNetwork() {
     for (int i=0; i<N; i++) {
@@ -79,15 +100,13 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
     while (true) {
         // Scan for next packet
         index = GetNextPacketIndex();
-        if (index < 0)
-            break;
+        if (index < 0) break;
 
         packetTransTime = nodes[index].GetNextEventTime();
+        //std::cout << "Next event time " << packetTransTime << std::endl;
 
-        if (packetTransTime > 1000)
-        {
-            return CalculatePerformance();
-        }
+
+        if (packetTransTime > simulationTime) break;
 
         // If a node is ready to transmit, then reset its busy backoff counter if being used
         if (persistenceType == PersistenceType::NonPersistent)
@@ -100,15 +119,15 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         int collisionIndex = -1;
 
         for (int i=0; i<N; i++) {
+            if (i==index) continue;
+
             // More than 1 collision can occur on one transmission
             if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
-                //std::cout << std::setprecision(10) << "Collision Occured between " << index << " and node " << i << endl;
-                //std::cout << std::setprecision(10) << "Node " << i << " collision time: " << nodes[i].GetNextEventTime() << endl;
-                //std::cout << std::setprecision(10) << "Node " << index << " collision time: " << nodes[index].GetNextEventTime() << endl;
 
                 nodes[i].TransmitPacketWithCollision();
                 // Collision occurs when signal from transmitted reaches node
-                nodes[i].ApplyExponentialBackOff(packetTransTime + abs(index-i) * propDelay);
+                double collisionTime = packetTransTime + abs(index-i)*propDelay;
+                nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
 
                 //std::cout << std::setprecision(10) << "Node " << i << " packets backed off to: " << nodes[i].GetNextEventTime() << endl;
 
@@ -122,10 +141,12 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
         // Process effects of collision or not
         if (collisionIndex >= 0)
         {
+            //std::cout << "Collision" << std::endl;
             nodes[index].TransmitPacketWithCollision();
             
             // If a collision occured the transmitting node will see it at the time of the first collision plus propogation back
-            nodes[index].ApplyExponentialBackOff(packetTransTime + 2*(abs(index-collisionIndex) * propDelay));
+            nodes[index].ApplyExponentialBackOff(packetTransTime + transDelay);
+            // 2*(abs(index-collisionIndex) * propDelay)
 
             //std::cout << std::setprecision(10) << "Node " << index << " packets backed off to: " << nodes[index].GetNextEventTime() << endl;
 
@@ -152,21 +173,15 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
 
         // Backoff on all nodes *after* packet is sent or collision is processed
         for (int i=0; i<N; i++) 
-        {
+        {   
+            //std::cout << packetTransTime << std::endl;
             if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) {
                 //std::cout << "Node " << i << " detected bus busy" << endl; 
                 switch(persistenceType)
                 {
                     case PersistenceType::Persistent:
                     {
-                        // If a collision occurs wait after node sees collision to transmit
-                        if (collisionIndex > 0) {
-                            nodes[i].ApplyBusyWait(nodes[collisionIndex].GetNextEventTime()+transDelay, abs(collisionIndex-i));
-                        }
-                        else {
-                            // Wait until node sees end of current packet
-                            nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(index-i));
-                        }
+                        nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(collisionIndex-i));
                         break;
                     }
                     case PersistenceType::NonPersistent:

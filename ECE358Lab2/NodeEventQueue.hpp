@@ -9,6 +9,7 @@ class NodeEventQueue
 public:
 
     NodeEventQueue(double newLambda, double newR);
+    NodeEventQueue();
     ~NodeEventQueue();
 
     struct NodeResult {
@@ -19,6 +20,7 @@ public:
     };
     
     void InitializeQueue(double simulationTime, double newPropDelay, double newTransDelay);
+    void InitializeQueue(double newPropDelay, double newTransDelay, std::list<double> events);
     bool WillCollideWithTransmission(double transTime, int distance);
     bool WillDetectBusBusy(double transTime, int distance);
 
