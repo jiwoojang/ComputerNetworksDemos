@@ -31,7 +31,7 @@ int main() {
         CSMACDNetwork::SimulationResult result = presistentSimulation.RunSimulation();
         std::cout << i << "," << result.throughput << "," << result.efficiency << ",";
 
-        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 7);
+        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 10);
         nonPersistentSimulation.InitializeNetwork();
         
         result = nonPersistentSimulation.RunSimulation();
@@ -46,7 +46,7 @@ int main() {
         CSMACDNetwork::SimulationResult result = presistentSimulation.RunSimulation();
         std::cout << i << "," << result.throughput << "," << result.efficiency << ",";
 
-        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 7);
+        CSMACDNetwork nonPersistentSimulation(PersistenceType::NonPersistent, i, 20);
         nonPersistentSimulation.InitializeNetwork();
         
         result = nonPersistentSimulation.RunSimulation();
