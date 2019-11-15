@@ -54,7 +54,4 @@ private:
     // Calculated values based on constants
     double propDelay;
     double transDelay;
-
-    Packet currentPacket;
-    Packet nextPacket;
 };

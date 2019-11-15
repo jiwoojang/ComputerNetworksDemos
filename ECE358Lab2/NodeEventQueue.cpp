@@ -88,6 +88,10 @@ void NodeEventQueue::PopEvent() {
     if (eventList.size() > 0) {
         eventList.pop_front();
     }
+    else 
+    {
+        return;
+    }
 }
 
 void NodeEventQueue::ResetBusyBackOffCounter()
@@ -117,115 +121,90 @@ bool NodeEventQueue::WillDetectBusBusy(double transTime, int distance)
     
     // We consider a packet that arrives EXACTLY at the time the bus is free
     // as a packet that will see the bus busy, not as a collision
-    return (nextPacketTime >= signalArivalTime) && (nextPacketTime < (signalArivalTime + transDelay));
+    return (nextPacketTime >= signalArivalTime) && (nextPacketTime <= (signalArivalTime + transDelay));
 }
 
-void NodeEventQueue::DiscardPacket() {
-        PopEvent();
-
-        // Reset counters
-        ResetCollisionCounter();
-        ResetBusyBackOffCounter();
+void NodeEventQueue::BufferPacketsToTime(double time)
+{
+    eventList.front().SetProcessTime(time);
 }
 
 // transTime is collision time is using greedy method
-void NodeEventQueue::ApplyExponentialBackOff(double transTime)
+void NodeEventQueue::ApplyExponentialBackOff(double timeStamp)
 {
     ++collisionCounter;
     
     if (collisionCounter > 10)
     {
-        DiscardPacket();
+        double transmissionTime = eventList.front().GetProcessTime();
+
+        // Drop packet
+        PopEvent();
         ++numDropped;
+        ResetCollisionCounter();
+
+        if (eventList.front().GetProcessTime() < transmissionTime)
+        {
+            BufferPacketsToTime(transmissionTime);
+        }
+
         return;
     }
+
     double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,collisionCounter) - 1.0f));
-    double waitTime = (randomMultiplier * 512.0f/R) + transTime;
+    double waitTime = (randomMultiplier * 512.0f/R) + timeStamp + transDelay;
 
-    for (Event& packetArrival : eventList)
+    BufferPacketsToTime(waitTime);
+}
+
+void NodeEventQueue::ApplyBusyWait(double timeStamp)
+{
+    BufferPacketsToTime(timeStamp);
+}
+
+void NodeEventQueue::ApplyBusyExponentialBackOff(double timeStamp)
+{
+    ++busyBackOffCounter;
+
+    if (busyBackOffCounter > 10)
     {
-        if (packetArrival.GetProcessTime() < waitTime)
+        double transmissionTime = eventList.front().GetProcessTime();
+        
+        // Drop packet
+        PopEvent();
+        ++numDropped;
+        ResetBusyBackOffCounter();
+
+        if (eventList.front().GetProcessTime() < transmissionTime)
         {
-            packetArrival.SetProcessTime(waitTime);
-        }
-        else 
-        {
-            break;
-        }
-    }
-}
-
-void NodeEventQueue::ApplyBusyWait(double transTime, int distance)
-{
-    double waitTime = (transTime + (distance*propDelay));
-
-    for (Event& packetArrival : eventList)
-    {   
-        // Events are stored in order
-        if (packetArrival.GetProcessTime() < waitTime)
-        {
-            packetArrival.SetProcessTime(waitTime);
-        }
-        else {
-            break;
-        }
-    }
-}
-
-void NodeEventQueue::ApplyBusyExponentialBackOff(double packetTime, int distance)
-{
-    double waitTime = eventList.front().GetProcessTime();
-
-    // Apply exponential backoff until node will see bus free
-    while (waitTime < (packetTime + distance*propDelay)) {
-        ++busyBackOffCounter;
-
-        if (busyBackOffCounter > 10)
-        {
-            DiscardPacket();
-            ++numDropped;
-            return;
+            BufferPacketsToTime(transmissionTime);
         }
 
-        double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f));
-        waitTime += (randomMultiplier * 512.0f/R);
+        return;
     }
 
+    double randomMultiplier = round(numGen.GenerateRandomNumberInRange(0, pow(2,busyBackOffCounter) - 1.0f));
+    double waitTime = (randomMultiplier * 512.0f/R) + timeStamp + transDelay;
+    
     // Backoff for all relevant nodes in the queue
-    for (Event& packetArrival : eventList)
-    {
-        if (packetArrival.GetProcessTime() < waitTime) 
-        {
-            packetArrival.SetProcessTime(waitTime);
-        } 
-        else 
-        {
-            break;
-        }
-    }
+    BufferPacketsToTime(waitTime);
 }
 
-void NodeEventQueue::TransmitPacketSuccessfully()
+void NodeEventQueue::TransmitPacketSuccessfully(double ditherCeiling)
 {
     if (!eventList.empty())
     {
         // Success!
         ++successfulTransmissions;
 
-        double transTime = eventList.front().GetProcessTime();
-        DiscardPacket();
+        double transmissionTime = eventList.front().GetProcessTime();
 
-        // update other packets on node to not send until current node is done
-        for (Event& packetArrival : eventList) 
+        PopEvent();
+
+        if (eventList.front().GetProcessTime() < (transmissionTime + transDelay))
         {
-            if (packetArrival.GetProcessTime() < transTime + transDelay)
-            {
-                packetArrival.SetProcessTime(transTime + transDelay);
-            }
-            else 
-            {
-                break;
-            }
+            // Add random dither here so that this node doesnt always win the priority race 
+            eventList.front().SetProcessTime(transmissionTime + transDelay + numGen.GenerateRandomNumberInRange(0, ditherCeiling));
         }
     }
 }

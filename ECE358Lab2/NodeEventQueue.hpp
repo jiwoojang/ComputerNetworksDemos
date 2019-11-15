@@ -27,17 +27,17 @@ public:
     double GetNextEventTime();
     int GetQueueSize();
 
-    void DiscardPacket();
     void PopEvent();
 
     void ResetBusyBackOffCounter();
     void ResetCollisionCounter();
+    void BufferPacketsToTime(double time);
     
-    void ApplyExponentialBackOff(double transTime);
-    void ApplyBusyWait(double transTime, int distance);
-    void ApplyBusyExponentialBackOff(double transTime, int distance);
+    void ApplyExponentialBackOff(double timeStamp);
+    void ApplyBusyWait(double timeStamp);
+    void ApplyBusyExponentialBackOff(double timeStamp);
 
-    void TransmitPacketSuccessfully();
+    void TransmitPacketSuccessfully(double ditherCeiling);
     void TransmitPacketWithCollision();
 
     NodeResult GetPerformanceStats();

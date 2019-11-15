@@ -4,7 +4,8 @@
 #include <iostream>
 #include <iomanip>
 #include <list>
-
+#include <vector> 
+#include <algorithm>
 
 CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, double newA) {
     persistenceType = newPersistenceType;
@@ -16,23 +17,9 @@ CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, int newN, doubl
     transDelay = L/R;
 }
 
-// Constructor that takes a manually given list of lists of arrival times
-CSMACDNetwork::CSMACDNetwork(PersistenceType newPersistenceType, std::list<std::list<double>> arrivals) {
-    persistenceType = newPersistenceType;
-    N = arrivals.size();
-
-    propDelay = D/S;
-    transDelay = L/R;
-
-    // Create new node for each list of arrivals and initialize node's arrivals to that arrival list
-    for (auto nodeArrivals: arrivals) {
-        NodeEventQueue newNode;
-        newNode.InitializeQueue(propDelay, transDelay, nodeArrivals);
-        nodes.push_back(newNode);
-    }
+CSMACDNetwork::~CSMACDNetwork() {
+    nodes.clear();
 }
-
-CSMACDNetwork::~CSMACDNetwork() {}
 
 // For given number of nodes and arrival characteristics, create nodes and generate node arrival times
 void CSMACDNetwork::InitializeNetwork() {
@@ -76,10 +63,12 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::CalculatePerformance() {
         totalCollisions += nodeResult.collisions;
         totalSucesses += nodeResult.successes;
         totalDropped += nodeResult.dropped;
+
+        //std::cout << "NODE : Packets: " << nodeResult.packets << " Collisions: " << nodeResult.collisions << " Successes: " << nodeResult.successes << " Dropped: " << nodeResult.dropped << " Packets left: " << node.GetQueueSize() << endl;
     }
-    
+    //std::cout << "Packets: " << totalPackets << " Collisions: " << totalCollisions << " Successes: " << totalSucesses << " Dropped: " << totalDropped << endl;
     double throughput = (totalSucesses * L) / simulationTime;
-    double efficiency = totalSucesses / (totalSucesses+totalCollisions);
+    double efficiency = totalSucesses / (totalSucesses+totalCollisions+totalDropped);
 
     return {throughput, efficiency};
 }
@@ -90,13 +79,23 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
     int index=0;
     double packetTransTime;
 
+    std::vector<int> collisionIndexCache;
+    double prevSuccess = 0;
+    int prevSuccessIndex = -1;
+
     while (true) {
+        // Clear cache
+        collisionIndexCache.clear();
+
         // Scan for next packet
         index = GetNextPacketIndex();
-        if (index < 0) break; // no packet found, all packets have been processed
+        if (index < 0)
+            return CalculatePerformance(); // no packet found, all packets have been processed
 
         packetTransTime = nodes[index].GetNextEventTime();
-        if (packetTransTime > simulationTime) break; // cutoff at the end of simulation time
+
+        if (packetTransTime > simulationTime)
+            return CalculatePerformance(); // cutoff at the end of simulation time
 
         // If a node is ready to transmit, then reset its busy backoff counter if being used
         if (persistenceType == PersistenceType::NonPersistent)
@@ -106,51 +105,81 @@ CSMACDNetwork::SimulationResult CSMACDNetwork::RunSimulation() {
 
         // Check for collisions
         bool collision = false;
+        double highestCollisionTime = -1;
+
         for (int i=0; i<N; i++) {
             if (i==index) continue;
 
             // More than 1 collision can occur on one transmission
-            if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) {
+            if (nodes[i].WillCollideWithTransmission(packetTransTime, abs(index-i))) 
+            {
+                // Track this collision
+                collisionIndexCache.push_back(i);
 
-                // Collision occurs right away, because nodes detect them right away
-                nodes[i].TransmitPacketWithCollision();
-                nodes[i].ApplyExponentialBackOff(nodes[i].GetNextEventTime()+transDelay);
+                //std::cout << setprecision(20) << "Collision at index: " << i << " with timestamp:" << nodes[i].GetNextEventTime() << " and transmission index: " << index << " at transmission time: " << packetTransTime << endl;
+
+                // Cache the highest collision time for the transmitting node to back off to
+                double collisionTime = packetTransTime + propDelay*abs(index - i);
+
+                if (collisionTime > highestCollisionTime && nodes[i].GetNextEventTime() > 0)
+                {
+                    highestCollisionTime = collisionTime;
+                }
+                
                 collision = true;
             }
         }
         
-        // Process effects of collision or not
-        if (collision)
+        // If collision free, transmit successfully
+        if (!collision)
         {
-            // If a collision occured the transmitting node sees it immediately as per lab manual
-            nodes[index].TransmitPacketWithCollision();
-            nodes[index].ApplyExponentialBackOff(packetTransTime + transDelay);
-        }
-        else
-        {
-            nodes[index].TransmitPacketSuccessfully();
+            // Dither percision is different per type, because of orders of magnitudes of operations
+            double ditherCeiling; 
+            if (persistenceType == PersistenceType::Persistent)
+                ditherCeiling = 1e-10;
+            else
+                ditherCeiling = DBL_MIN;
+                
+            nodes[index].TransmitPacketSuccessfully(ditherCeiling);
+            //std::cout << "Successful transmission at index: " << index << " at transmission time: " << packetTransTime << endl;
         }
 
-        // Backoff on all nodes *after* packet is sent or collision is processed
+        // Now proecss all other nodes
         for (int i=0; i<N; i++) 
-        {   
+        {
+            if (collision)
+            {
+                if (i == index)
+                {
+                    nodes[index].TransmitPacketWithCollision();
+                    nodes[index].ApplyExponentialBackOff(packetTransTime);
+                    continue;
+                }
+                else if (std::find(collisionIndexCache.begin(), collisionIndexCache.end(), i) != collisionIndexCache.end())
+                {
+                    nodes[i].TransmitPacketWithCollision();
+                    nodes[i].ApplyExponentialBackOff(packetTransTime + propDelay*abs(index - i));
+                    continue;
+                }
+            }            
+
             if (nodes[i].WillDetectBusBusy(packetTransTime, abs(index-i))) 
             {
                 switch(persistenceType)
                 {
                     case PersistenceType::Persistent:
                     {
-                        nodes[i].ApplyBusyWait(packetTransTime+transDelay, abs(index-i));
+                        nodes[i].ApplyBusyWait(packetTransTime + transDelay + propDelay*abs(index-i));
                         break;
                     }
                     case PersistenceType::NonPersistent:
                     {
-                        nodes[i].ApplyBusyExponentialBackOff(packetTransTime+transDelay, abs(index-i));
+                        nodes[i].ApplyBusyExponentialBackOff(packetTransTime + transDelay + propDelay*abs(index-i));
                         break;
                     }
                 }
             }
-        }
+        }  
     }
 
     return CalculatePerformance();
